@@ -1,0 +1,2 @@
+
+void getContent(char *path) {}

@@ -1,4 +1,6 @@
+#include "../Include/content.h"
 #include <arpa/inet.h>
+#include <asm-generic/socket.h>
 #include <netinet/in.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -16,6 +18,7 @@ int main(int argc, char *argv[]) {
   struct sockaddr_in serveraddr;
   int clientfd;
   char buff[1024] = {0};
+  char *pbody;
 
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -24,6 +27,8 @@ int main(int argc, char *argv[]) {
   serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
   serveraddr.sin_port = htons(port);
 
+  int optval = 1;
+  setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
   if (bind(socket_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
     printf("Error binding port\n");
     exit(1);
@@ -41,16 +46,18 @@ int main(int argc, char *argv[]) {
 
     while ((n = read(clientfd, line, sizeof(line) / sizeof(char))) > 0) {
 
-      printf("%s", line);
-
       if (line[n - 1] == '\n')
         break;
 
       if (n <= 0)
         break;
     }
-    snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\nHello");
+
+    pbody = getContent("/index.html");
+    snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\n%s", pbody);
     write(clientfd, (char *)buff, strlen(buff));
+
+    free(pbody);
     close(clientfd);
   }
   return EXIT_SUCCESS;

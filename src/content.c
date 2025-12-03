@@ -5,15 +5,14 @@
 #include <unistd.h>
 
 char *getContent(char *path) {
-  const char *HOME = getenv("HOME");
-  const char *APP = getenv("APP");
+  const char *APP = getenv("MINIWEB_SOURCE");
   char filepath[200];
   char filebuff[1024];
   char *httpbody = malloc(sizeof(char));
   char *tmp;
   httpbody[0] = '\0';
 
-  snprintf(filepath, sizeof(filepath), "%s%s%s", HOME, APP, path);
+  snprintf(filepath, sizeof(filepath), "%s%s", APP, path);
   FILE *file = fopen(filepath, "r");
   if (file != NULL) {
     while (fgets(filebuff, sizeof(filebuff), file) != NULL) {

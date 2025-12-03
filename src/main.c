@@ -54,7 +54,12 @@ int main(int argc, char *argv[]) {
     }
 
     pbody = getContent("/index.html");
-    snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\n%s", pbody);
+    if (pbody != NULL) {
+      snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\n%s", pbody);
+    } else {
+      snprintf(buff, sizeof(buff),
+               "HTTP/1.0 500 Internal Server Error\r\n\r\n");
+    }
     write(clientfd, (char *)buff, strlen(buff));
 
     free(pbody);

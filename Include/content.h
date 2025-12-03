@@ -2,6 +2,6 @@
 #define CONTENT_H
 
 
-void getContent(char *path);
+char *getContent(char *path);
 
 #endif // CONTENT_H

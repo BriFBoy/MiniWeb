@@ -1,17 +1,16 @@
+SRC=src
+OBJ=obj
+BIN=bin
 
-SRC=./src/
-OBJ = main.o content.o
+SRCS=$(wildcard $(SRC)/*.c)
+OBJS=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCS)) 
 
-build: $(OBJ)
-	gcc main.o content.o -o program
+build: $(OBJS)
+	gcc $^ -o $(BIN)/program
 
-main.o: $(SRC)main.c
-	gcc -c $(SRC)main.c -o main.o
+$(OBJ)/%.o: $(SRC)/%.c
+	gcc -c $^ -o $@ 
 
-content.o: $(SRC)content.c
-	gcc -c $(SRC)content.c -o content.o
 
 clean: 
-	rm -f content.o main.o program
-
-
+	rm -f $(OBJ)/* $(BIN)/* 

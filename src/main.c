@@ -1,4 +1,6 @@
+#include "../Include/content.h"
 #include <arpa/inet.h>
+#include <asm-generic/socket.h>
 #include <netinet/in.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -11,11 +13,12 @@
 
 int main(int argc, char *argv[]) {
   int socket_fd;
-  short port = 8081;
+  short port = 8080;
   char line[1024];
   struct sockaddr_in serveraddr;
   int clientfd;
   char buff[1024] = {0};
+  char *pbody;
 
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -24,32 +27,42 @@ int main(int argc, char *argv[]) {
   serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
   serveraddr.sin_port = htons(port);
 
+  int optval = 1;
+  setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
   if (bind(socket_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
-    printf("error binding port");
+    printf("Error binding port\n");
     exit(1);
   }
+
   if (listen(socket_fd, 50) < 0) {
-    printf("error listening to socket");
+    printf("Error listening to socket\n");
     exit(1);
   }
+
   int n;
-  while (true) {
-    printf("Waithing for connection");
+  for (;;) {
+    printf("Waithing for connection...\n");
     clientfd = accept(socket_fd, NULL, NULL);
 
     while ((n = read(clientfd, line, sizeof(line) / sizeof(char))) > 0) {
 
-      printf("%s", line);
+      if (line[n - 1] == '\n')
+        break;
 
-      if (line[strlen(line) - 1] == '\n') {
+      if (n <= 0)
         break;
-      }
-      if (n < 0) {
-        break;
-      }
     }
-    snprintf((char *)buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\nHello");
+
+    pbody = getContent("/index.html");
+    if (pbody != NULL) {
+      snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\n%s", pbody);
+    } else {
+      snprintf(buff, sizeof(buff),
+               "HTTP/1.0 500 Internal Server Error\r\n\r\n");
+    }
     write(clientfd, (char *)buff, strlen(buff));
+
+    free(pbody);
     close(clientfd);
   }
   return EXIT_SUCCESS;

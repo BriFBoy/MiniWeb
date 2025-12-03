@@ -1,3 +1,5 @@
 
-src/program
-src/vg*
+*program
+vg*
+
+*.o

@@ -1,4 +1,5 @@
 #include "../Include/content.h"
+#include "../Include/pars.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <netinet/in.h>
@@ -11,14 +12,13 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+void serveConnection(const int clientfd);
+
 int main(int argc, char *argv[]) {
   int socket_fd;
   short port = 8080;
-  char line[1024];
   struct sockaddr_in serveraddr;
   int clientfd;
-  char buff[1024] = {0};
-  char *pbody;
 
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -39,31 +39,51 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  int n;
   for (;;) {
     printf("Waithing for connection...\n");
     clientfd = accept(socket_fd, NULL, NULL);
-
-    while ((n = read(clientfd, line, sizeof(line) / sizeof(char))) > 0) {
-
-      if (line[n - 1] == '\n')
-        break;
-
-      if (n <= 0)
-        break;
-    }
-
-    pbody = getContent("/index.html");
-    if (pbody != NULL) {
-      snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\n%s", pbody);
-    } else {
-      snprintf(buff, sizeof(buff),
-               "HTTP/1.0 500 Internal Server Error\r\n\r\n");
-    }
-    write(clientfd, (char *)buff, strlen(buff));
-
-    free(pbody);
-    close(clientfd);
+    serveConnection(clientfd);
   }
+
   return EXIT_SUCCESS;
+}
+
+void serveConnection(const int clientfd) {
+  const int maxRequestLenghtInBytes = 5120;
+  char buff[1024] = {0};
+  char httprequest[maxRequestLenghtInBytes];
+  httprequest[0] = '\0';
+  char *pbody;
+  int bytesread = 0;
+
+  int n;
+  while ((n = read(clientfd, buff, sizeof(buff) - 1)) > 0) {
+    bytesread += n;
+    if (bytesread > maxRequestLenghtInBytes) {
+      continue;
+    }
+    printf("Bytes read: %d\n", bytesread);
+    strcat(httprequest, buff);
+
+    if (buff[n - 1] == '\n')
+      break;
+    if (n <= 0)
+      break;
+  }
+
+  httpRequest *request = parshttp(buff);
+  printf("%s", request->);
+  memset(buff, 0, sizeof(buff));
+  pbody = getContent("/index.html");
+  if (pbody != NULL) {
+    snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\n%s", pbody);
+  } else {
+    snprintf(buff, sizeof(buff),
+             "HTTP/1.0 500 Internal Server Error\r\n\r\nWe are haveing some "
+             "problems right now. Please come back later");
+  }
+  write(clientfd, (char *)buff, strlen(buff));
+
+  free(pbody);
+  close(clientfd);
 }

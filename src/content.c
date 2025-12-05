@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 char *getContent(char *path) {
+  // gets the path of all the html, css, e.t.c
   const char *APP = getenv("MINIWEB_SOURCE");
   char filepath[200];
   char filebuff[1024];
@@ -18,7 +19,7 @@ char *getContent(char *path) {
     while (fgets(filebuff, sizeof(filebuff), file) != NULL) {
       tmp = realloc(httpbody, strlen(filebuff) + 1 + strlen(httpbody));
       if (!tmp) {
-        printf("Failed to realloc in getContent");
+        printf("Failed to realloc in getContent\n");
         exit(1);
       }
       httpbody = tmp;
@@ -28,7 +29,7 @@ char *getContent(char *path) {
     fclose(file);
     return httpbody;
   } else {
-    printf("Failed to open file");
+    printf("Failed to open file\n");
     free(httpbody);
   }
   return NULL;

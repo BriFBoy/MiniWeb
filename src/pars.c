@@ -1,34 +1,37 @@
 #include "../Include/http.h"
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define BUFFERSIZE 4096
 enum status { METADATA, HEADER, BODY };
 
-httpRequest *parshttp(const char *httprequest) {
-  char buffer[1024];
-  strcpy(buffer, httprequest);
-  char *str;
+httpRequest *parshttp(char *httprequest) {
+  char *pstr;
   int status = METADATA;
-  httpRequest *request = malloc(sizeof(httprequest));
-  char *line;
-  line = strtok(buffer, "\r\n");
+  httpRequest *request = malloc(sizeof(httpRequest));
+  char *psavestat1 = httprequest;
+  char *pline;
+  char *psavestat2;
+
+  pline = strtok_r(httprequest, "\r\n", &psavestat1);
   do {
+    psavestat2 = pline;
 
     switch (status) {
     case METADATA: {
 
-      str = strtok(line, " ");
-      if (str != NULL) {
-        strcpy(request->requestLine.method, str);
+      pstr = strtok_r(psavestat2, " ", &psavestat2);
+      if (pstr != NULL) {
+        strcpy(request->requestLine.method, pstr);
       }
-      str = strtok(NULL, " ");
-      if (str != NULL) {
-        strcpy(request->requestLine.url, str);
+      pstr = strtok_r(NULL, " ", &psavestat2);
+      if (pstr != NULL) {
+        strcpy(request->requestLine.url, pstr);
       }
-      str = strtok(NULL, " ");
-      if (str != NULL) {
-        strcpy(request->requestLine.version, str);
+      pstr = strtok_r(NULL, " ", &psavestat2);
+      if (pstr != NULL) {
+        strcpy(request->requestLine.version, pstr);
       }
       status = HEADER;
       break;
@@ -39,6 +42,6 @@ httpRequest *parshttp(const char *httprequest) {
       break;
     }
 
-  } while ((line = strtok(NULL, "\r\n")));
+  } while ((pline = strtok_r(NULL, "\r\n", &psavestat1)) != NULL);
   return request;
 }

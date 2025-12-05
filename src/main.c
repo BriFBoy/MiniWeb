@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 void serveConnection(const int clientfd);
+void fixNondirectpath(httpRequest *request);
 
 int main(int argc, char *argv[]) {
   int socket_fd;
@@ -72,9 +73,14 @@ void serveConnection(const int clientfd) {
   }
 
   httpRequest *request = parshttp(buff);
-  printf("%s", request->);
+  printf("%s %s %s\n", request->requestLine.method, request->requestLine.url,
+         request->requestLine.version);
   memset(buff, 0, sizeof(buff));
-  pbody = getContent("/index.html");
+  printf("%s %s %s\n", request->requestLine.method, request->requestLine.url,
+         request->requestLine.version);
+
+  fixNondirectpath(request);
+  pbody = getContent(request->requestLine.url);
   if (pbody != NULL) {
     snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\n%s", pbody);
   } else {
@@ -84,6 +90,13 @@ void serveConnection(const int clientfd) {
   }
   write(clientfd, (char *)buff, strlen(buff));
 
+  free(request);
   free(pbody);
   close(clientfd);
+}
+
+void fixNondirectpath(httpRequest *request) {
+  if (strchr(request->requestLine.url, '.') == NULL) {
+    strcat(request->requestLine.url, "/index.html");
+  }
 }

@@ -1,10 +1,11 @@
 
+#include "../Include/global.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-char *getContent(char *path) {
+char *getContent(char *path, enum statusCodes *statuscode) {
   // gets the path of all the html, css, e.t.c
   const char *APP = getenv("MINIWEB_SOURCE");
   char filepath[200];
@@ -14,13 +15,15 @@ char *getContent(char *path) {
   httpbody[0] = '\0';
 
   snprintf(filepath, sizeof(filepath), "%s%s", APP, path);
+  printf("%s\n", filepath);
   FILE *file = fopen(filepath, "r");
   if (file != NULL) {
     while (fgets(filebuff, sizeof(filebuff), file) != NULL) {
       tmp = realloc(httpbody, strlen(filebuff) + 1 + strlen(httpbody));
       if (!tmp) {
         printf("Failed to realloc in getContent\n");
-        exit(1);
+        *statuscode = 10;
+        return NULL;
       }
       httpbody = tmp;
       strcat(httpbody, filebuff);
@@ -31,6 +34,7 @@ char *getContent(char *path) {
   } else {
     printf("Failed to open file\n");
     free(httpbody);
+    *statuscode = FILE_NOT_FOUND;
+    return NULL;
   }
-  return NULL;
 }

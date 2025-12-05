@@ -14,6 +14,7 @@
 
 void serveConnection(const int clientfd);
 void fixNondirectpath(httpRequest *request);
+char *getResponseFromError(enum statusCodes statuscodes, int *lenght);
 
 int main(int argc, char *argv[]) {
   int socket_fd;
@@ -76,19 +77,22 @@ void serveConnection(const int clientfd) {
   printf("%s %s %s\n", request->requestLine.method, request->requestLine.url,
          request->requestLine.version);
   memset(buff, 0, sizeof(buff));
-  printf("%s %s %s\n", request->requestLine.method, request->requestLine.url,
-         request->requestLine.version);
 
   fixNondirectpath(request);
-  pbody = getContent(request->requestLine.url);
+
+  enum statusCodes statuscode;
+  pbody = getContent(request->requestLine.url, &statuscode);
+  char *response;
+  int responselenght;
   if (pbody != NULL) {
     snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\n%s", pbody);
+    write(clientfd, (char *)buff, strlen(buff));
   } else {
-    snprintf(buff, sizeof(buff),
-             "HTTP/1.0 500 Internal Server Error\r\n\r\nWe are haveing some "
-             "problems right now. Please come back later");
+    response = getResponseFromError(statuscode, &responselenght);
+    write(clientfd, response, strlen(response));
+
+    free(response);
   }
-  write(clientfd, (char *)buff, strlen(buff));
 
   free(request);
   free(pbody);
@@ -96,7 +100,35 @@ void serveConnection(const int clientfd) {
 }
 
 void fixNondirectpath(httpRequest *request) {
+  char path[100];
+  strncpy(path, request->requestLine.url, sizeof(path));
   if (strchr(request->requestLine.url, '.') == NULL) {
-    strcat(request->requestLine.url, "/index.html");
+    if (path[strlen(path) - 1] == '/') {
+      strncat(request->requestLine.url, "index.html",
+              sizeof(request->requestLine.url) -
+                  strlen(request->requestLine.url) - 1);
+    } else {
+      strncat(request->requestLine.url, "/index.html",
+              sizeof(request->requestLine.url) -
+                  strlen(request->requestLine.url) - 1);
+    }
   }
+}
+
+char *getResponseFromError(enum statusCodes statuscodes, int *responselenght) {
+  *responselenght = 256;
+  char *response = malloc(*responselenght);
+
+  switch (statuscodes) {
+  case INTERNAL_ERROR:
+    strncpy(response, "HTTP/1.0 500 Internal Server Error\r\n\r\n",
+            *responselenght);
+    break;
+  case FILE_NOT_FOUND:
+    strncpy(response, "HTTP/1.0 404 Not Found\r\n\r\n", *responselenght);
+    break;
+  case SUCCESS:
+    break;
+  }
+  return response;
 }

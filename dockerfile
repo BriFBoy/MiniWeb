@@ -6,6 +6,7 @@ COPY . .
 
 RUN pacman -Sy --noconfirm make gcc && mkdir -p bin obj && make build
 
+
 FROM archlinux:latest
 
 WORKDIR /WORK

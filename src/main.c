@@ -44,6 +44,8 @@ int main(int argc, char *argv[]) {
 
   for (;;) {
     printf("Waithing for connection...\n");
+
+    fflush(stdout);
     clientfd = accept(socket_fd, NULL, NULL);
     serveConnection(clientfd);
   }
@@ -61,18 +63,19 @@ void serveConnection(const int clientfd) {
 
   int n;
   while ((n = read(clientfd, buff, sizeof(buff) - 1)) > 0) {
+    buff[n] = '\0';
     bytesread += n;
-    if (bytesread > maxRequestLenghtInBytes) {
-      continue;
-    }
-    printf("Bytes read: %d\n", bytesread);
-    strcat(httprequest, buff);
 
-    if (buff[n - 1] == '\n')
+    if (bytesread > maxRequestLenghtInBytes) {
       break;
-    if (n <= 0)
+    }
+    strncat(httprequest, buff, sizeof(httprequest) - strlen(httprequest) - 1);
+
+    if (strstr(httprequest, "\r\n\r\n") != NULL) {
       break;
+    }
   }
+  printf("Bytes read: %d\n", bytesread);
 
   httpRequest *request = parshttp(httprequest);
   char *response;
@@ -90,10 +93,10 @@ void serveConnection(const int clientfd) {
 
     enum statusCodes statuscode = SUCCESS;
     pbody = getContent(request->requestLine.url, &statuscode);
-    printf("%d\n", statuscode);
     if (pbody != NULL) {
       snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\n%s", pbody);
       write(clientfd, (char *)buff, strlen(buff));
+      free(pbody);
     } else {
       response = getResponseFromError(statuscode, &responselenght);
       write(clientfd, response, strlen(response));
@@ -103,7 +106,6 @@ void serveConnection(const int clientfd) {
     free(request);
   }
 
-  free(pbody);
   close(clientfd);
 }
 

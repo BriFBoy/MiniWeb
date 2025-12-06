@@ -3,5 +3,6 @@
 #include "http.h"
 
 httpRequest *parshttp(char *httprequest);
+void strtrim(char *str);
 
 #endif // !PARS_H

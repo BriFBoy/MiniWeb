@@ -13,6 +13,7 @@ struct requestLine {
 typedef struct {
   struct requestLine requestLine;
   Pair header[50];
+  int headerlenght;
   // body not implemented yeat
 } httpRequest;
 

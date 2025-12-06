@@ -1,4 +1,5 @@
 #include "../Include/content.h"
+#include "../Include/global.h"
 #include "../Include/pars.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
@@ -51,8 +52,8 @@ int main(int argc, char *argv[]) {
 }
 
 void serveConnection(const int clientfd) {
-  const int maxRequestLenghtInBytes = 5120;
-  char buff[1024] = {0};
+  const int maxRequestLenghtInBytes = MAXBUFFSIZE;
+  char buff[MAXBUFFSIZE] = {0};
   char httprequest[maxRequestLenghtInBytes];
   httprequest[0] = '\0';
   char *pbody;
@@ -73,28 +74,35 @@ void serveConnection(const int clientfd) {
       break;
   }
 
-  httpRequest *request = parshttp(buff);
-  printf("%s %s %s\n", request->requestLine.method, request->requestLine.url,
-         request->requestLine.version);
-  memset(buff, 0, sizeof(buff));
-
-  fixNondirectpath(request);
-
-  enum statusCodes statuscode;
-  pbody = getContent(request->requestLine.url, &statuscode);
+  httpRequest *request = parshttp(httprequest);
   char *response;
   int responselenght;
-  if (pbody != NULL) {
-    snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\n%s", pbody);
-    write(clientfd, (char *)buff, strlen(buff));
+  if (request == NULL) {
+    response = getResponseFromError(INTERNAL_ERROR, &responselenght);
+    write(clientfd, response, responselenght);
   } else {
-    response = getResponseFromError(statuscode, &responselenght);
-    write(clientfd, response, strlen(response));
 
-    free(response);
+    printf("%s %s %s\n", request->requestLine.method, request->requestLine.url,
+           request->requestLine.version);
+    memset(buff, 0, sizeof(buff));
+
+    fixNondirectpath(request);
+
+    enum statusCodes statuscode = SUCCESS;
+    pbody = getContent(request->requestLine.url, &statuscode);
+    printf("%d\n", statuscode);
+    if (pbody != NULL) {
+      snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\n%s", pbody);
+      write(clientfd, (char *)buff, strlen(buff));
+    } else {
+      response = getResponseFromError(statuscode, &responselenght);
+      write(clientfd, response, strlen(response));
+
+      free(response);
+    }
+    free(request);
   }
 
-  free(request);
   free(pbody);
   close(clientfd);
 }
@@ -102,6 +110,7 @@ void serveConnection(const int clientfd) {
 void fixNondirectpath(httpRequest *request) {
   char path[100];
   strncpy(path, request->requestLine.url, sizeof(path));
+
   if (strchr(request->requestLine.url, '.') == NULL) {
     if (path[strlen(path) - 1] == '/') {
       strncat(request->requestLine.url, "index.html",
@@ -116,19 +125,31 @@ void fixNondirectpath(httpRequest *request) {
 }
 
 char *getResponseFromError(enum statusCodes statuscodes, int *responselenght) {
-  *responselenght = 256;
-  char *response = malloc(*responselenght);
+  *responselenght = 1024;
+  char *pResponse = malloc(*responselenght);
+  char *pbody;
+  enum statusCodes statuscodes1;
 
   switch (statuscodes) {
   case INTERNAL_ERROR:
-    strncpy(response, "HTTP/1.0 500 Internal Server Error\r\n\r\n",
+
+    strncpy(pResponse, "HTTP/1.0 500 Internal Server Error\r\n\r\n",
             *responselenght);
     break;
   case FILE_NOT_FOUND:
-    strncpy(response, "HTTP/1.0 404 Not Found\r\n\r\n", *responselenght);
+
+    pbody = getContent("/.errors/404.html", &statuscodes);
+    if (pbody != NULL) {
+      snprintf(pResponse, *responselenght, "HTTP/1.0 404 Not Found\r\n\r\n%s",
+               pbody);
+      free(pbody);
+    } else {
+      strncpy(pResponse, "HTTP/1.0 404 Not Found\r\n\r\n", *responselenght);
+    }
     break;
   case SUCCESS:
     break;
   }
-  return response;
+  *responselenght = strlen(pResponse);
+  return pResponse;
 }

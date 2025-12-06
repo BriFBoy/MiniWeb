@@ -9,13 +9,12 @@ char *getContent(char *path, enum statusCodes *statuscode) {
   // gets the path of all the html, css, e.t.c
   const char *APP = getenv("MINIWEB_SOURCE");
   char filepath[200];
-  char filebuff[1024];
+  char filebuff[MAXBUFFSIZE];
   char *httpbody = malloc(sizeof(char));
   char *tmp;
   httpbody[0] = '\0';
 
   snprintf(filepath, sizeof(filepath), "%s%s", APP, path);
-  printf("%s\n", filepath);
   FILE *file = fopen(filepath, "r");
   if (file != NULL) {
     while (fgets(filebuff, sizeof(filebuff), file) != NULL) {

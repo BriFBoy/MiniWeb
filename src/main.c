@@ -1,4 +1,6 @@
 #include "../Include/content.h"
+#include "../Include/global.h"
+#include "../Include/pars.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <netinet/in.h>
@@ -11,14 +13,15 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+void serveConnection(const int clientfd);
+void fixNondirectpath(httpRequest *request);
+char *getResponseFromError(enum statusCodes statuscodes, int *lenght);
+
 int main(int argc, char *argv[]) {
   int socket_fd;
   short port = 8080;
-  char line[1024];
   struct sockaddr_in serveraddr;
   int clientfd;
-  char buff[1024] = {0};
-  char *pbody;
 
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -39,31 +42,116 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  int n;
   for (;;) {
     printf("Waithing for connection...\n");
+
+    fflush(stdout);
     clientfd = accept(socket_fd, NULL, NULL);
+    serveConnection(clientfd);
+  }
 
-    while ((n = read(clientfd, line, sizeof(line) / sizeof(char))) > 0) {
+  return EXIT_SUCCESS;
+}
 
-      if (line[n - 1] == '\n')
-        break;
+void serveConnection(const int clientfd) {
+  const int maxRequestLenghtInBytes = MAXBUFFSIZE;
+  char buff[MAXBUFFSIZE] = {0};
+  char httprequest[maxRequestLenghtInBytes];
+  httprequest[0] = '\0';
+  char *pbody;
+  int bytesread = 0;
 
-      if (n <= 0)
-        break;
+  int n;
+  while ((n = read(clientfd, buff, sizeof(buff) - 1)) > 0) {
+    buff[n] = '\0';
+    bytesread += n;
+
+    if (bytesread > maxRequestLenghtInBytes) {
+      break;
     }
+    strncat(httprequest, buff, sizeof(httprequest) - strlen(httprequest) - 1);
 
-    pbody = getContent("/index.html");
+    if (strstr(httprequest, "\r\n\r\n") != NULL) {
+      break;
+    }
+  }
+  printf("Bytes read: %d\n", bytesread);
+
+  httpRequest *request = parshttp(httprequest);
+  char *response;
+  int responselenght;
+  if (request == NULL) {
+    response = getResponseFromError(INTERNAL_ERROR, &responselenght);
+    write(clientfd, response, responselenght);
+  } else {
+
+    printf("%s %s %s\n", request->requestLine.method, request->requestLine.url,
+           request->requestLine.version);
+    memset(buff, 0, sizeof(buff));
+
+    fixNondirectpath(request);
+
+    enum statusCodes statuscode = SUCCESS;
+    pbody = getContent(request->requestLine.url, &statuscode);
     if (pbody != NULL) {
       snprintf(buff, sizeof(buff), "HTTP/1.0 200 OK\r\n\r\n%s", pbody);
+      write(clientfd, (char *)buff, strlen(buff));
+      free(pbody);
     } else {
-      snprintf(buff, sizeof(buff),
-               "HTTP/1.0 500 Internal Server Error\r\n\r\n");
-    }
-    write(clientfd, (char *)buff, strlen(buff));
+      response = getResponseFromError(statuscode, &responselenght);
+      write(clientfd, response, strlen(response));
 
-    free(pbody);
-    close(clientfd);
+      free(response);
+    }
+    free(request);
   }
-  return EXIT_SUCCESS;
+
+  close(clientfd);
+}
+
+void fixNondirectpath(httpRequest *request) {
+  char path[100];
+  strncpy(path, request->requestLine.url, sizeof(path));
+
+  if (strchr(request->requestLine.url, '.') == NULL) {
+    if (path[strlen(path) - 1] == '/') {
+      strncat(request->requestLine.url, "index.html",
+              sizeof(request->requestLine.url) -
+                  strlen(request->requestLine.url) - 1);
+    } else {
+      strncat(request->requestLine.url, "/index.html",
+              sizeof(request->requestLine.url) -
+                  strlen(request->requestLine.url) - 1);
+    }
+  }
+}
+
+char *getResponseFromError(enum statusCodes statuscodes, int *responselenght) {
+  *responselenght = 1024;
+  char *pResponse = malloc(*responselenght);
+  char *pbody;
+  enum statusCodes statuscodes1;
+
+  switch (statuscodes) {
+  case INTERNAL_ERROR:
+
+    strncpy(pResponse, "HTTP/1.0 500 Internal Server Error\r\n\r\n",
+            *responselenght);
+    break;
+  case FILE_NOT_FOUND:
+
+    pbody = getContent("/.errors/404.html", &statuscodes);
+    if (pbody != NULL) {
+      snprintf(pResponse, *responselenght, "HTTP/1.0 404 Not Found\r\n\r\n%s",
+               pbody);
+      free(pbody);
+    } else {
+      strncpy(pResponse, "HTTP/1.0 404 Not Found\r\n\r\n", *responselenght);
+    }
+    break;
+  case SUCCESS:
+    break;
+  }
+  *responselenght = strlen(pResponse);
+  return pResponse;
 }

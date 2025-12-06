@@ -1,0 +1,93 @@
+#include "../Include/pars.h"
+#include "../Include/http.h"
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#define BUFFERSIZE 4096
+enum status { METADATA, HEADER, BODY };
+
+httpRequest *parshttp(char *httprequest) {
+  char *pstr;
+  int status = METADATA;
+  httpRequest *request = malloc(sizeof(httpRequest));
+  char *psavestat1 = httprequest;
+  char *pline;
+  char *psavestat2;
+  int requestlenght = 0;
+
+  pline = strtok_r(httprequest, "\r\n", &psavestat1);
+  do {
+    if (pline == NULL) {
+      break;
+    }
+    psavestat2 = pline;
+
+    switch (status) {
+    case METADATA: {
+      pstr = strtok_r(psavestat2, " ", &psavestat2);
+      if (pstr != NULL) {
+        strcpy(request->requestLine.method, pstr);
+      } else {
+        return NULL;
+      }
+      pstr = strtok_r(NULL, " ", &psavestat2);
+      if (pstr != NULL) {
+        strcpy(request->requestLine.url, pstr);
+      } else {
+        return NULL;
+      }
+      pstr = strtok_r(NULL, " ", &psavestat2);
+      if (pstr != NULL) {
+        strcpy(request->requestLine.version, pstr);
+      } else {
+        return NULL;
+      }
+
+      status = HEADER;
+      break;
+    }
+    case HEADER:
+      while ((pline = strtok_r(NULL, "\r\n", &psavestat1)) != NULL) {
+
+        pstr = strtok_r(pline, ":", &psavestat2);
+        if (pstr == NULL)
+          break;
+        strcpy(request->header[requestlenght].key, pstr);
+
+        pstr = strtok_r(NULL, "", &psavestat2);
+        if (pstr == NULL)
+          break;
+        strcpy(request->header[requestlenght].value, pstr);
+
+        strtrim(request->header[requestlenght].value);
+
+        requestlenght++;
+      }
+      request->headerlenght = requestlenght;
+      break;
+    case BODY:
+      // Body not suported
+      break;
+    }
+
+  } while ((pline = strtok_r(NULL, "\r\n", &psavestat1)) != NULL);
+  return request;
+}
+
+void strtrim(char *str) {
+  int start = 0, end = strlen(str) - 1;
+
+  while (str[start] == ' ' || str[start] == '\r' || str[start] == '\n') {
+    start++;
+  }
+
+  while (str[end] == ' ' || str[end] == '\r' || str[end] == '\n') {
+    end--;
+  }
+
+  if (start > 0 || end < (strlen(str) - 1) && end > start) {
+    memmove(str, str + start, end - start + 1);
+    str[end - start + 1] = '\0';
+  }
+}

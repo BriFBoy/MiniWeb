@@ -8,7 +8,7 @@
 char *getContent(char *path, enum statusCodes *statuscode) {
   // gets the path of all the html, css, e.t.c
   const char *APP = getenv("MINIWEB_SOURCE");
-  char filepath[200];
+  char filepath[MAXBUFFSIZE];
   char filebuff[MAXBUFFSIZE];
   char *httpbody = malloc(sizeof(char));
   char *tmp;

@@ -27,19 +27,19 @@ httpRequest *parshttp(char *httprequest) {
     case METADATA: {
       pstr = strtok_r(psavestat2, " ", &psavestat2);
       if (pstr != NULL) {
-        strcpy(request->requestLine.method, pstr);
+        strncpy(request->requestLine.method, pstr, strlen(pstr) + 1);
       } else {
         return NULL;
       }
       pstr = strtok_r(NULL, " ", &psavestat2);
       if (pstr != NULL) {
-        strcpy(request->requestLine.url, pstr);
+        strncpy(request->requestLine.path, pstr, strlen(pstr) + 1);
       } else {
         return NULL;
       }
       pstr = strtok_r(NULL, " ", &psavestat2);
       if (pstr != NULL) {
-        strcpy(request->requestLine.version, pstr);
+        strncpy(request->requestLine.version, pstr, strlen(pstr) + 1);
       } else {
         return NULL;
       }
@@ -53,12 +53,12 @@ httpRequest *parshttp(char *httprequest) {
         pstr = strtok_r(pline, ":", &psavestat2);
         if (pstr == NULL)
           break;
-        strcpy(request->header[requestlenght].key, pstr);
+        strncpy(request->header[requestlenght].key, pstr, strlen(pstr) + 1);
 
         pstr = strtok_r(NULL, "", &psavestat2);
         if (pstr == NULL)
           break;
-        strcpy(request->header[requestlenght].value, pstr);
+        strncpy(request->header[requestlenght].value, pstr, strlen(pstr) + 1);
 
         strtrim(request->header[requestlenght].value);
 

@@ -8,7 +8,7 @@
 char *getContent(char *path, enum statusCodes *statuscode) {
   // gets the path of all the html, css, e.t.c
   const char *APP = getenv("MINIWEB_SOURCE");
-  char filepath[200];
+  char filepath[1024];
   char filebuff[MAXBUFFSIZE];
   char *httpbody = malloc(sizeof(char));
   char *tmp;
@@ -18,7 +18,8 @@ char *getContent(char *path, enum statusCodes *statuscode) {
   FILE *file = fopen(filepath, "r");
   if (file != NULL) {
     while (fgets(filebuff, sizeof(filebuff), file) != NULL) {
-      tmp = realloc(httpbody, strlen(filebuff) + 1 + strlen(httpbody));
+      tmp = realloc(httpbody,
+                    strlen(filebuff) + strlen(httpbody) + NULL_TERMINATOR);
       if (!tmp) {
         printf("Failed to realloc in getContent\n");
         *statuscode = 10;

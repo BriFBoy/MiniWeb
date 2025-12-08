@@ -17,7 +17,16 @@
 void serveConnection(const int clientfd);
 void sendResponse(const int clientfd, httpRequest *request, Response *response);
 
+void checkRunState() {
+  if (getenv("MINIWEB_SOURCE") == NULL) {
+    printf("Missing env MINIWEB_SOURCE\n");
+    exit(EXIT_FAILURE);
+  }
+}
+
 int main(int argc, char *argv[]) {
+  checkRunState();
+
   int socket_fd;
   short port = 8080;
   struct sockaddr_in serveraddr;
@@ -34,12 +43,12 @@ int main(int argc, char *argv[]) {
   setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
   if (bind(socket_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
     printf("Error binding port\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   if (listen(socket_fd, 50) < 0) {
     printf("Error listening to socket\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   for (;;) {
@@ -101,6 +110,7 @@ void sendResponse(const int clientfd, httpRequest *request,
                   Response *response) {
   enum statusCodes statuscode = SUCCESS;
   response->pBody = getContent(request->requestLine.path, &statuscode);
+
   if (response->pBody != NULL) {
     response->pResponse = malloc(MAXBUFFSIZE);
     snprintf(response->pResponse, MAXBUFFSIZE, "HTTP/1.0 200 OK\r\n\r\n%s",

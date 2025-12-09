@@ -1,57 +1,67 @@
+#include "../Include/httpbuilder.h"
 #include "../Include/http.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 void addStatusLine(char *response, const char *statusline,
                    int maxResponseLenght) {
 
   strncpy(response, statusline, maxResponseLenght);
-  strncat(response, "\r\n", maxResponseLenght);
+  strncat(response, "\r\n", maxResponseLenght - strlen(response));
 }
 
 void addHeaderLine(char *response, const char *headerfield,
                    int maxResponseLenght) {
 
-  strncat(response, headerfield, maxResponseLenght);
-  strncat(response, "\r\n", maxResponseLenght);
+  strncat(response, headerfield, maxResponseLenght - strlen(response));
+  strncat(response, "\r\n", maxResponseLenght - strlen(response));
 }
 void addContentType(char *response, const int maxResponseLenght,
-                    const char *contentType) {
-  char Content_Type[100];
+                    const char *contentTypeValue) {
+  char contentType[100];
 
-  snprintf(Content_Type, sizeof(Content_Type), "Content-Type: %s\r\n",
-           contentType);
-  strncat(response, Content_Type, maxResponseLenght);
+  snprintf(contentType, sizeof(contentType), "Content-Type: %s\r\n",
+           contentTypeValue);
+  strncat(response, contentType, maxResponseLenght - strlen(response));
 }
 void addContentLenght(char *response, const int maxResponseLenght,
-                      const int contentLenght) {
-  char Content_Type[100];
+                      const int contentLenghtValue) {
+  char contentLenght[100];
 
-  snprintf(Content_Type, sizeof(Content_Type), "Content-Lenght: %d\r\n",
-           contentLenght);
-  strncat(response, Content_Type, maxResponseLenght);
+  snprintf(contentLenght, sizeof(contentLenght), "Content-Lenght: %d\r\n",
+           contentLenghtValue);
+  strncat(response, contentLenght, maxResponseLenght - strlen(response));
 }
 
 void addBody(char *response, const char *body, int maxResponseLenght) {
 
-  strncat(response, "\r\n", maxResponseLenght);
-  strncat(response, body, maxResponseLenght);
+  strncat(response, "\r\n", maxResponseLenght - strlen(response));
+  strncat(response, body, maxResponseLenght - strlen(response));
 }
 
 char *getDefaultHeaderFields() {
-  return "Server: MyServer/1.0\r\n"
+  return "Server: MiniWeb\r\n"
          "X-Content-Type-Options: nosniff\r\n"
          "Referrer-Policy: no-referrer";
+}
+void createResponse(char *response, const int maxResponseLenght,
+                    char *statusline, const char *path, const int contentLenght,
+                    const char *body) {
+
+  addStatusLine(response, statusline, maxResponseLenght);
+  addHeaderLine(response, getDefaultHeaderFields(), maxResponseLenght);
+  addContentType(response, maxResponseLenght, getContentType(path));
+  addContentLenght(response, maxResponseLenght, contentLenght);
+  addBody(response, body, maxResponseLenght);
 }
 
 const char *getContentType(const char *path) {
   const char *fileextention = strrchr(path, '.');
   if (fileextention) {
 
-    for (int i = 0; i < (sizeof(MINE) / sizeof(MINE[0])); i++) {
-      if (strcmp(MINE[i].key, fileextention) == 0) {
-        return MINE[i].value;
+    for (int i = 0; i < (sizeof(G_MINE) / sizeof(G_MINE[0])); i++) {
+      if (strcmp(G_MINE[i].key, fileextention) == 0) {
+        return G_MINE[i].value;
       }
     }
   }

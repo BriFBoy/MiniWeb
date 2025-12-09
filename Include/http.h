@@ -30,7 +30,7 @@ typedef struct {
 void fixNondirectpath(httpRequest *request);
 char *getResponseFromError(enum statusCodes statuscodes, int *responselenght);
 
-static Pair MINE[] = {{".html", "text/html"},
+static Pair G_MINE[] = {{".html", "text/html"},
                       {".css", "text/css"}};
 
 

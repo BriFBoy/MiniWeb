@@ -118,17 +118,9 @@ void sendResponse(const int clientfd, httpRequest *request,
     response->responseLenght = MAXBUFFSIZE;
     char content_lenght[100];
 
-    addStatusLine(response->pResponse, "HTTP/1.0 200 OK",
-                  response->responseLenght);
-    addHeaderLine(response->pResponse, getDefaultHeaderFields(),
-                  response->responseLenght);
-    addContentType(response->pResponse, response->responseLenght,
-                   getContentType(request->requestLine.path));
-    addContentLenght(response->pResponse, response->responseLenght,
-                     strlen(response->pBody));
-    addHeaderLine(response->pResponse, content_lenght,
-                  response->responseLenght);
-    addBody(response->pResponse, response->pBody, response->responseLenght);
+    createResponse(response->pResponse, response->responseLenght,
+                   "HTTP/1.0 200 OK", request->requestLine.path,
+                   strlen(response->pBody), response->pBody);
 
     write(clientfd, response->pResponse, strlen(response->pResponse));
 

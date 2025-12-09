@@ -1,6 +1,7 @@
 #include "../Include/content.h"
 #include "../Include/global.h"
 #include "../Include/http.h"
+#include "../Include/httpbuilder.h"
 #include "../Include/pars.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
@@ -98,6 +99,7 @@ void serveConnection(const int clientfd) {
     printf("%s %s %s\n", parsedRequest->requestLine.method,
            parsedRequest->requestLine.path, parsedRequest->requestLine.version);
     fixNondirectpath(parsedRequest);
+    printf("%s\n", parsedRequest->requestLine.path);
 
     sendResponse(clientfd, parsedRequest, &response);
     free(parsedRequest);
@@ -113,8 +115,13 @@ void sendResponse(const int clientfd, httpRequest *request,
 
   if (response->pBody != NULL) {
     response->pResponse = malloc(MAXBUFFSIZE);
-    snprintf(response->pResponse, MAXBUFFSIZE, "HTTP/1.0 200 OK\r\n\r\n%s",
-             response->pBody);
+    response->responseLenght = MAXBUFFSIZE;
+    char content_lenght[100];
+
+    createResponse(response->pResponse, response->responseLenght,
+                   "HTTP/1.0 200 OK", request->requestLine.path,
+                   strlen(response->pBody), response->pBody);
+
     write(clientfd, response->pResponse, strlen(response->pResponse));
 
     free(response->pBody);

@@ -35,6 +35,7 @@ void addContentLenght(char *response, const int maxResponseLenght,
 
 void addBody(char *response, const char *body, int maxResponseLenght) {
 
+  // Needs to fix for binary files
   strncat(response, "\r\n", maxResponseLenght - strlen(response));
   strncat(response, body, maxResponseLenght - strlen(response));
 }
@@ -61,6 +62,7 @@ const char *getContentType(const char *path) {
 
     for (int i = 0; i < (sizeof(G_MINE) / sizeof(G_MINE[0])); i++) {
       if (strcmp(G_MINE[i].key, fileextention) == 0) {
+        printf("%s\n", G_MINE[i].value);
         return G_MINE[i].value;
       }
     }

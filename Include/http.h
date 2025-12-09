@@ -31,7 +31,8 @@ void fixNondirectpath(httpRequest *request);
 char *getResponseFromError(enum statusCodes statuscodes, int *responselenght);
 
 static Pair G_MINE[] = {{".html", "text/html"},
-                      {".css", "text/css"}};
+                        {".css", "text/css"},
+                        {".ico", "image/x-icon"}};
 
 
 #endif // !HTTP_H

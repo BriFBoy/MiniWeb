@@ -1,6 +1,7 @@
 #include "../Include/http.h"
 #include "../Include/content.h"
 #include "../Include/global.h"
+#include "../Include/httpbuilder.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,18 +34,19 @@ char *getResponseFromError(enum statusCodes statuscodes, int *responselenght) {
   switch (statuscodes) {
   case INTERNAL_ERROR:
 
-    strncpy(pResponse, "HTTP/1.0 500 Internal Server Error\r\n\r\n",
-            *responselenght);
+    addStatusLine(pResponse, "HTTP/1.0 500 INTERNAL SERVER ERROR",
+                  *responselenght);
     break;
   case FILE_NOT_FOUND:
 
     pbody = getContent("/.errors/404.html", &statuscodes);
     if (pbody != NULL) {
-      snprintf(pResponse, *responselenght, "HTTP/1.0 404 Not Found\r\n\r\n%s",
-               pbody);
+      addStatusLine(pResponse, "HTTP/1.0 404 Not Found", *responselenght);
+      addBody(pResponse, pbody, *responselenght);
+
       free(pbody);
     } else {
-      strncpy(pResponse, "HTTP/1.0 404 Not Found\r\n\r\n", *responselenght);
+      addStatusLine(pResponse, "HTTP/1.0 404 Not Found\r\n", *responselenght);
     }
     break;
   case SUCCESS:

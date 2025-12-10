@@ -131,11 +131,15 @@ void sendResponse(const int clientfd, httpRequest *request,
     free(response->pBody);
     free(response->pResponse);
   } else {
+    printf("%d", statuscode);
     response->pResponse =
         getResponseFromError(statuscode, response->pBody, &bodySize);
 
     write(clientfd, response->pResponse, strlen(response->pResponse));
-    write(clientfd, response->pBody, bodySize);
+    if (response->pBody != NULL) {
+      printf("body is NULL");
+      write(clientfd, response->pBody, bodySize);
+    }
 
     free(response->pResponse);
     free(response->pBody);

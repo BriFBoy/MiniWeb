@@ -3,6 +3,7 @@
 #include "../Include/global.h"
 #include "../Include/httpbuilder.h"
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -28,6 +29,10 @@ void fixNondirectpath(httpRequest *request) {
 char *getResponseFromError(enum statusCodes statuscodes, unsigned char *pbody,
                            size_t *bodySize) {
   char *pResponse = malloc(MAXBUFFSIZE);
+  if (pResponse == NULL) {
+    printf("Unable to malloc in getResponseFromError");
+    return NULL;
+  }
   pResponse[0] = '\0';
 
   switch (statuscodes) {
@@ -40,6 +45,7 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char *pbody,
 
     pbody = getContent("/.errors/404.html", &statuscodes, bodySize);
     if (pbody != NULL) {
+      printf("fes");
 
       createResponse(pResponse, MAXBUFFSIZE, "HTTP/1.0 404 Not Found",
                      "/.errors/404.html", *bodySize);

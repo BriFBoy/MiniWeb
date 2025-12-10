@@ -7,6 +7,7 @@
 #include <asm-generic/socket.h>
 #include <netinet/in.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,8 +93,9 @@ void serveConnection(const int clientfd) {
   // send a INTERNAL_ERROR
   if (parsedRequest == NULL) {
     printf("Error parsing http\n");
-    response.pResponse =
-        getResponseFromError(INTERNAL_ERROR, &response.responseLenght);
+    unsigned char *body;
+    size_t bodySize;
+    response.pResponse = getResponseFromError(INTERNAL_ERROR, body, &bodySize);
     write(clientfd, response.pResponse, response.responseLenght);
   } else {
     printf("%s %s %s\n", parsedRequest->requestLine.method,
@@ -111,7 +113,9 @@ void serveConnection(const int clientfd) {
 void sendResponse(const int clientfd, httpRequest *request,
                   Response *response) {
   enum statusCodes statuscode = SUCCESS;
-  response->pBody = getContent(request->requestLine.path, &statuscode);
+  size_t bodySize;
+  response->pBody =
+      getContent(request->requestLine.path, &statuscode, &bodySize);
 
   if (response->pBody != NULL) {
     response->pResponse = malloc(MAXBUFFSIZE);
@@ -119,18 +123,21 @@ void sendResponse(const int clientfd, httpRequest *request,
     char content_lenght[100];
 
     createResponse(response->pResponse, response->responseLenght,
-                   "HTTP/1.0 200 OK", request->requestLine.path,
-                   strlen(response->pBody), response->pBody);
+                   "HTTP/1.0 200 OK", request->requestLine.path, bodySize);
 
     write(clientfd, response->pResponse, strlen(response->pResponse));
+    write(clientfd, response->pBody, bodySize);
 
     free(response->pBody);
     free(response->pResponse);
   } else {
     response->pResponse =
-        getResponseFromError(statuscode, &response->responseLenght);
+        getResponseFromError(statuscode, response->pBody, &bodySize);
+
     write(clientfd, response->pResponse, strlen(response->pResponse));
+    write(clientfd, response->pBody, bodySize);
 
     free(response->pResponse);
+    free(response->pBody);
   }
 }

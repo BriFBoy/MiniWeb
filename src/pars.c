@@ -4,7 +4,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define BUFFERSIZE 4096
 enum status { METADATA, HEADER, BODY };
 
 httpRequest *parshttp(char *httprequest) {

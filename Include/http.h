@@ -2,6 +2,7 @@
 #define HTTP_H
 
 #include "../Include/global.h"
+#include <stddef.h>
 
 typedef struct {
   char key[200];
@@ -23,12 +24,13 @@ typedef struct {
 // Response struct
 typedef struct {
   char *pResponse;
-  char *pBody;
+  unsigned char *pBody;
   int responseLenght;
 } Response;
 
 void fixNondirectpath(httpRequest *request);
-char *getResponseFromError(enum statusCodes statuscodes, int *responselenght);
+char *getResponseFromError(enum statusCodes statuscodes, unsigned char *pbody,
+                           size_t *bodySize);
 
 static Pair G_MINE[] = {{".html", "text/html"},
                         {".css", "text/css"},

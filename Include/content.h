@@ -2,8 +2,10 @@
 #define CONTENT_H
 
 #include "../Include/global.h"
+#include <stddef.h>
 
 
-char *getContent(char *path, enum statusCodes *statuscode);
+unsigned char *getContent(char *path, enum statusCodes *statuscode,
+                          size_t *outSize);
 
 #endif // CONTENT_H

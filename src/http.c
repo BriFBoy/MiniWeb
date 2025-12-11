@@ -26,7 +26,7 @@ void fixNondirectpath(httpRequest *request) {
   free(path);
 }
 
-char *getResponseFromError(enum statusCodes statuscodes, unsigned char *pbody,
+char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
                            size_t *bodySize) {
   char *pResponse = malloc(MAXBUFFSIZE);
   if (pResponse == NULL) {
@@ -43,10 +43,8 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char *pbody,
     break;
   case FILE_NOT_FOUND:
 
-    pbody = getContent("/.errors/404.html", &statuscodes, bodySize);
+    *pbody = getContent("/.errors/404.html", &statuscodes, bodySize);
     if (pbody != NULL) {
-      printf("fes");
-
       createResponse(pResponse, MAXBUFFSIZE, "HTTP/1.0 404 Not Found",
                      "/.errors/404.html", *bodySize);
 

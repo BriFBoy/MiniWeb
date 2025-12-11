@@ -29,12 +29,15 @@ typedef struct {
 } Response;
 
 void fixNondirectpath(httpRequest *request);
-char *getResponseFromError(enum statusCodes statuscodes, unsigned char *pbody,
+char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
                            size_t *bodySize);
 
 static Pair G_MINE[] = {{".html", "text/html"},
                         {".css", "text/css"},
-                        {".ico", "image/x-icon"}};
+                        {".ico", "image/x-icon"},
+                        {".png", "image/png"},
+                        {".jpg", "image/jpg"},
+                        {".jpeg", "image/jpeg"}};
 
 
 #endif // !HTTP_H

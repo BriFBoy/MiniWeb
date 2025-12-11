@@ -18,7 +18,6 @@ unsigned char *getContent(char *path, enum statusCodes *statuscode,
   snprintf(filepath, sizeof(filepath), "%s%s", APP, path);
   FILE *file = fopen(filepath, "rb");
   if (file != NULL) {
-    printf("%s\n", filepath);
     int fd = fileno(file);
     struct stat stat;
     fstat(fd, &stat);
@@ -27,12 +26,6 @@ unsigned char *getContent(char *path, enum statusCodes *statuscode,
     httpbody = malloc(stat.st_size);
     if (httpbody) {
       fread(httpbody, 1, stat.st_size, file);
-      if (strcmp(filepath, "./app/.errors/404.html") == 0) {
-
-        for (int i = 0; i < stat.st_size; i++) {
-          printf("%x ", httpbody[i]);
-        }
-      }
     } else {
       printf("Failed to malloc\n");
       *statuscode = INTERNAL_ERROR;

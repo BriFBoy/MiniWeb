@@ -95,13 +95,12 @@ void serveConnection(const int clientfd) {
     printf("Error parsing http\n");
     unsigned char *body;
     size_t bodySize;
-    response.pResponse = getResponseFromError(INTERNAL_ERROR, body, &bodySize);
+    response.pResponse = getResponseFromError(INTERNAL_ERROR, &body, &bodySize);
     write(clientfd, response.pResponse, response.responseLenght);
   } else {
     printf("%s %s %s\n", parsedRequest->requestLine.method,
            parsedRequest->requestLine.path, parsedRequest->requestLine.version);
     fixNondirectpath(parsedRequest);
-    printf("%s\n", parsedRequest->requestLine.path);
 
     sendResponse(clientfd, parsedRequest, &response);
     free(parsedRequest);
@@ -131,14 +130,13 @@ void sendResponse(const int clientfd, httpRequest *request,
     free(response->pBody);
     free(response->pResponse);
   } else {
-    printf("%d", statuscode);
     response->pResponse =
-        getResponseFromError(statuscode, response->pBody, &bodySize);
+        getResponseFromError(statuscode, &response->pBody, &bodySize);
 
     write(clientfd, response->pResponse, strlen(response->pResponse));
+    write(clientfd, response->pBody, bodySize);
     if (response->pBody != NULL) {
-      printf("body is NULL");
-      write(clientfd, response->pBody, bodySize);
+      printf("body is NULL\n");
     }
 
     free(response->pResponse);

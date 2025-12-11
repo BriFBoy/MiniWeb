@@ -36,6 +36,8 @@ void addContentLenght(char *response, const int maxResponseLenght,
 char *getDefaultHeaderFields() {
   return "Server: MiniWeb\r\n"
          "X-Content-Type-Options: nosniff\r\n"
+         "Connection: close\r\n"
+         "Cache-Control: private, max-age=60\r\n"
          "Referrer-Policy: no-referrer";
 }
 void createResponse(char *response, const int maxResponseLenght,
@@ -51,10 +53,9 @@ void createResponse(char *response, const int maxResponseLenght,
 
 const char *getContentType(const char *path) {
   const char *fileextention = strrchr(path, '.');
-  printf("%s\n", fileextention);
   if (fileextention) {
-
     for (int i = 0; i < (sizeof(G_MINE) / sizeof(G_MINE[0])); i++) {
+
       if (strcmp(G_MINE[i].key, fileextention) == 0) {
         printf("%s\n", G_MINE[i].value);
         return G_MINE[i].value;

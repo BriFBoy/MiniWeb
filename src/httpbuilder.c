@@ -7,6 +7,7 @@ void addStatusLine(char *response, const char *statusline,
                    int maxResponseLenght) {
 
   strncpy(response, statusline, maxResponseLenght);
+  response[strlen(statusline)] = '\0';
   strncat(response, "\r\n", maxResponseLenght - strlen(response));
 }
 
@@ -28,7 +29,7 @@ void addContentLenght(char *response, const int maxResponseLenght,
                       const int contentLenghtValue) {
   char contentLenght[100];
 
-  snprintf(contentLenght, sizeof(contentLenght), "Content-Lenght: %d\r\n",
+  snprintf(contentLenght, sizeof(contentLenght), "Content-Length: %d\r\n",
            contentLenghtValue);
   strncat(response, contentLenght, maxResponseLenght - strlen(response));
 }
@@ -40,9 +41,9 @@ char *getDefaultHeaderFields() {
          "Cache-Control: private, max-age=60\r\n"
          "Referrer-Policy: no-referrer";
 }
-void createResponse(char *response, const int maxResponseLenght,
-                    char *statusline, const char *path,
-                    const int contentLenght) {
+void createResponseHeader(char *response, const int maxResponseLenght,
+                          char *statusline, const char *path,
+                          const int contentLenght) {
 
   addStatusLine(response, statusline, maxResponseLenght);
   addHeaderLine(response, getDefaultHeaderFields(), maxResponseLenght);
@@ -54,11 +55,11 @@ void createResponse(char *response, const int maxResponseLenght,
 const char *getContentType(const char *path) {
   const char *fileextention = strrchr(path, '.');
   if (fileextention) {
-    for (int i = 0; i < (sizeof(G_MINE) / sizeof(G_MINE[0])); i++) {
+    for (int i = 0; i < (sizeof(G_MIME) / sizeof(G_MIME[0])); i++) {
 
-      if (strcmp(G_MINE[i].key, fileextention) == 0) {
-        printf("%s\n", G_MINE[i].value);
-        return G_MINE[i].value;
+      if (strcmp(G_MIME[i].key, fileextention) == 0) {
+        printf("%s\n", G_MIME[i].value);
+        return G_MIME[i].value;
       }
     }
   }

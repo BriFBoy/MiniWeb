@@ -83,17 +83,14 @@ void readIncommingData(char *buff, int *bytesread, const int clientfd,
 }
 
 void serveConnection(const int clientfd) {
-  char *httprequest = malloc(MAXBUFFSIZE);
+  char httprequest[MAXBUFFSIZE];
   httprequest[0] = '\0';
-  char *buff = malloc(MAXBUFFSIZE);
+  char buff[MAXBUFFSIZE];
   Response response;
   int bytesread = 0;
 
   readIncommingData(buff, &bytesread, clientfd, httprequest);
   httpRequest *parsedRequest = parshttp(httprequest);
-
-  free(buff);
-  free(httprequest);
 
   if (parsedRequest) {
     printf("%s %s %s\n", parsedRequest->requestLine.method,
@@ -127,8 +124,9 @@ void sendResponse(const int clientfd, httpRequest *request,
     response->responseLenght = MAXBUFFSIZE;
     char content_lenght[100];
 
-    createResponse(response->pResponse, response->responseLenght,
-                   "HTTP/1.0 200 OK", request->requestLine.path, bodySize);
+    createResponseHeader(response->pResponse, response->responseLenght,
+                         "HTTP/1.0 200 OK", request->requestLine.path,
+                         bodySize);
 
     write(clientfd, response->pResponse, strlen(response->pResponse));
     write(clientfd, response->pBody, bodySize);
@@ -141,9 +139,6 @@ void sendResponse(const int clientfd, httpRequest *request,
 
     write(clientfd, response->pResponse, strlen(response->pResponse));
     write(clientfd, response->pBody, bodySize);
-    if (response->pBody != NULL) {
-      printf("body is NULL\n");
-    }
 
     free(response->pResponse);
     free(response->pBody);

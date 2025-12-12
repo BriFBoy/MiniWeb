@@ -6,10 +6,10 @@ SRCS=$(wildcard $(SRC)/*.c)
 OBJS=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCS)) 
 
 build: $(OBJS)
-	gcc $^ -o $(BIN)/program -g
+	gcc $^ -g -o $(BIN)/program 
 
 $(OBJ)/%.o: $(SRC)/%.c
-	gcc -c $^ -o $@ 
+	gcc -g -c $^ -o $@ 
 
 
 clean: 

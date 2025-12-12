@@ -18,6 +18,8 @@
 
 void serveConnection(const int clientfd);
 void sendResponse(const int clientfd, httpRequest *request, Response *response);
+void readIncommingData(char *buff, int *bytesread, const int clientfd,
+                       char *httprequest);
 
 void checkRunState() {
   if (getenv("MINIWEB_SOURCE") == NULL) {
@@ -63,37 +65,15 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
 }
 
-void readIncommingData(char *buff, int *bytesread, const int clientfd,
-                       char *httprequest) {
-  int n;
-  while ((n = read(clientfd, buff, MAXBUFFSIZE - NULL_TERMINATOR)) > 0) {
-    buff[n] = '\0';
-    *bytesread += n;
-
-    if (*bytesread > MAXBUFFSIZE) {
-      break;
-    }
-    strncat(httprequest, buff,
-            MAXBUFFSIZE - strlen(httprequest) - NULL_TERMINATOR);
-
-    if (strstr(httprequest, "\r\n\r\n") != NULL) {
-      break;
-    }
-  }
-}
-
 void serveConnection(const int clientfd) {
-  char *httprequest = malloc(MAXBUFFSIZE);
+  char httprequest[MAXBUFFSIZE];
   httprequest[0] = '\0';
-  char *buff = malloc(MAXBUFFSIZE);
+  char buff[MAXBUFFSIZE];
   Response response;
   int bytesread = 0;
 
   readIncommingData(buff, &bytesread, clientfd, httprequest);
   httpRequest *parsedRequest = parshttp(httprequest);
-
-  free(buff);
-  free(httprequest);
 
   if (parsedRequest) {
     printf("%s %s %s\n", parsedRequest->requestLine.method,
@@ -115,6 +95,24 @@ void serveConnection(const int clientfd) {
   close(clientfd);
 }
 
+void readIncommingData(char *buff, int *bytesread, const int clientfd,
+                       char *httprequest) {
+  int n;
+  while ((n = read(clientfd, buff, MAXBUFFSIZE - NULL_TERMINATOR)) > 0) {
+    buff[n] = '\0';
+    *bytesread += n;
+
+    if (*bytesread > MAXBUFFSIZE) {
+      break;
+    }
+    strncat(httprequest, buff,
+            MAXBUFFSIZE - strlen(httprequest) - NULL_TERMINATOR);
+
+    if (strstr(httprequest, "\r\n\r\n") != NULL) {
+      break;
+    }
+  }
+}
 void sendResponse(const int clientfd, httpRequest *request,
                   Response *response) {
   enum statusCodes statuscode = SUCCESS;
@@ -127,8 +125,9 @@ void sendResponse(const int clientfd, httpRequest *request,
     response->responseLenght = MAXBUFFSIZE;
     char content_lenght[100];
 
-    createResponse(response->pResponse, response->responseLenght,
-                   "HTTP/1.0 200 OK", request->requestLine.path, bodySize);
+    createResponseHeader(response->pResponse, response->responseLenght,
+                         "HTTP/1.0 200 OK", request->requestLine.path,
+                         bodySize);
 
     write(clientfd, response->pResponse, strlen(response->pResponse));
     write(clientfd, response->pBody, bodySize);
@@ -141,9 +140,6 @@ void sendResponse(const int clientfd, httpRequest *request,
 
     write(clientfd, response->pResponse, strlen(response->pResponse));
     write(clientfd, response->pBody, bodySize);
-    if (response->pBody != NULL) {
-      printf("body is NULL\n");
-    }
 
     free(response->pResponse);
     free(response->pBody);

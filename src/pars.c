@@ -39,6 +39,7 @@ httpRequest *parshttp(char *httprequest) {
       pstr = strtok_r(NULL, " ", &psavestat2);
       if (pstr != NULL) {
         strncpy(request->requestLine.version, pstr, strlen(pstr) + 1);
+        strtrim(request->requestLine.version);
       } else {
         return NULL;
       }
@@ -75,7 +76,8 @@ httpRequest *parshttp(char *httprequest) {
 }
 
 void strtrim(char *str) {
-  int start = 0, end = strlen(str) - 1;
+  int len = strlen(str);
+  int start = 0, end = len - 1;
 
   while (str[start] == ' ' || str[start] == '\r' || str[start] == '\n') {
     start++;
@@ -85,7 +87,7 @@ void strtrim(char *str) {
     end--;
   }
 
-  if (start > 0 || end < (strlen(str) - 1) && end > start) {
+  if (start > 0 || end < (len - 1) && end > start) {
     memmove(str, str + start, end - start + 1);
     str[end - start + 1] = '\0';
   }

@@ -5,14 +5,13 @@
 
 void addStatusLine(char *response, const char *statusline, int maxResponseLenght);
 void addHeaderLine(char *response, const char *headerfield, int maxResponseLenght);
-void addContentType(char *response, const int maxResponseLenght,
-                    const char *contentType);
+const char *getContentType(const char *path);
 void addBody(char *response, size_t responseSize, const unsigned char *body,
              size_t bodySize, int maxResponseLenght);
 char *getDefaultHeaderFields(); 
-const char *getContentType(const char *path);
-void addContentLenght(char *response, const int maxResponseLenght,
-                      const int contentLenght);
+void addContentTypeAndLenght(char *response, const int maxResponseLenght,
+                    const char *contentTypeValue,
+                    const int contentLenghtValue);
 void createResponseHeader(char *response, const int maxResponseLenght,
                           char *statusline, const char *path,
                           const int contentLenght);

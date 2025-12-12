@@ -63,47 +63,53 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
 }
 
-void serveConnection(const int clientfd) {
-  char httprequest[MAXBUFFSIZE];
-  httprequest[0] = '\0';
-  char buff[MAXBUFFSIZE] = {0};
-  Response response;
-  int bytesread = 0;
-
+void readIncommingData(char *buff, int *bytesread, const int clientfd,
+                       char *httprequest) {
   int n;
-  while ((n = read(clientfd, buff, sizeof(buff) - NULL_TERMINATOR)) > 0) {
+  while ((n = read(clientfd, buff, MAXBUFFSIZE - NULL_TERMINATOR)) > 0) {
     buff[n] = '\0';
-    bytesread += n;
+    *bytesread += n;
 
-    if (bytesread > MAXBUFFSIZE) {
+    if (*bytesread > MAXBUFFSIZE) {
       break;
     }
     strncat(httprequest, buff,
-            sizeof(httprequest) - strlen(httprequest) - NULL_TERMINATOR);
+            MAXBUFFSIZE - strlen(httprequest) - NULL_TERMINATOR);
 
     if (strstr(httprequest, "\r\n\r\n") != NULL) {
       break;
     }
   }
-  memset(buff, 0, sizeof(buff));
+}
 
+void serveConnection(const int clientfd) {
+  char *httprequest = malloc(MAXBUFFSIZE);
+  httprequest[0] = '\0';
+  char *buff = malloc(MAXBUFFSIZE);
+  Response response;
+  int bytesread = 0;
+
+  readIncommingData(buff, &bytesread, clientfd, httprequest);
   httpRequest *parsedRequest = parshttp(httprequest);
 
-  // If parsing of http request is NULL,
-  // send a INTERNAL_ERROR
-  if (parsedRequest == NULL) {
+  free(buff);
+  free(httprequest);
+
+  if (parsedRequest) {
+    printf("%s %s %s\n", parsedRequest->requestLine.method,
+           parsedRequest->requestLine.path, parsedRequest->requestLine.version);
+
+    fixNondirectpath(parsedRequest);
+    sendResponse(clientfd, parsedRequest, &response);
+
+    free(parsedRequest);
+  } else {
     printf("Error parsing http\n");
     unsigned char *body;
     size_t bodySize;
+
     response.pResponse = getResponseFromError(INTERNAL_ERROR, &body, &bodySize);
     write(clientfd, response.pResponse, response.responseLenght);
-  } else {
-    printf("%s %s %s\n", parsedRequest->requestLine.method,
-           parsedRequest->requestLine.path, parsedRequest->requestLine.version);
-    fixNondirectpath(parsedRequest);
-
-    sendResponse(clientfd, parsedRequest, &response);
-    free(parsedRequest);
   }
 
   close(clientfd);

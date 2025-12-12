@@ -5,18 +5,18 @@
 #include <stddef.h>
 
 typedef struct {
-  char key[200];
-  char value[200];
+  char key[100];
+  char value[100];
 } Pair;
 
 struct requestLine {
     char method[25];
-    char path[200];
+    char path[150];
     char version[25];
 };
 typedef struct {
   struct requestLine requestLine;
-  Pair header[50];
+  Pair header[25];
   int headerlenght;
   // body not implemented yeat
 } httpRequest;

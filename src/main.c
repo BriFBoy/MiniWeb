@@ -18,6 +18,8 @@
 
 void serveConnection(const int clientfd);
 void sendResponse(const int clientfd, httpRequest *request, Response *response);
+void readIncommingData(char *buff, int *bytesread, const int clientfd,
+                       char *httprequest);
 
 void checkRunState() {
   if (getenv("MINIWEB_SOURCE") == NULL) {
@@ -63,25 +65,6 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
 }
 
-void readIncommingData(char *buff, int *bytesread, const int clientfd,
-                       char *httprequest) {
-  int n;
-  while ((n = read(clientfd, buff, MAXBUFFSIZE - NULL_TERMINATOR)) > 0) {
-    buff[n] = '\0';
-    *bytesread += n;
-
-    if (*bytesread > MAXBUFFSIZE) {
-      break;
-    }
-    strncat(httprequest, buff,
-            MAXBUFFSIZE - strlen(httprequest) - NULL_TERMINATOR);
-
-    if (strstr(httprequest, "\r\n\r\n") != NULL) {
-      break;
-    }
-  }
-}
-
 void serveConnection(const int clientfd) {
   char httprequest[MAXBUFFSIZE];
   httprequest[0] = '\0';
@@ -112,6 +95,24 @@ void serveConnection(const int clientfd) {
   close(clientfd);
 }
 
+void readIncommingData(char *buff, int *bytesread, const int clientfd,
+                       char *httprequest) {
+  int n;
+  while ((n = read(clientfd, buff, MAXBUFFSIZE - NULL_TERMINATOR)) > 0) {
+    buff[n] = '\0';
+    *bytesread += n;
+
+    if (*bytesread > MAXBUFFSIZE) {
+      break;
+    }
+    strncat(httprequest, buff,
+            MAXBUFFSIZE - strlen(httprequest) - NULL_TERMINATOR);
+
+    if (strstr(httprequest, "\r\n\r\n") != NULL) {
+      break;
+    }
+  }
+}
 void sendResponse(const int clientfd, httpRequest *request,
                   Response *response) {
   enum statusCodes statuscode = SUCCESS;

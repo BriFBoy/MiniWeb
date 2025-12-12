@@ -1,7 +1,7 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#define MAXBUFFSIZE 4096
+#define MAXBUFFSIZE 2048
 #define NULL_TERMINATOR 1
 
 enum statusCodes {

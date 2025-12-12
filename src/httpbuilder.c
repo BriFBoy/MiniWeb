@@ -17,17 +17,15 @@ void addHeaderLine(char *response, const char *headerfield,
   strncat(response, headerfield, maxResponseLenght - strlen(response));
   strncat(response, "\r\n", maxResponseLenght - strlen(response));
 }
-void addContentType(char *response, const int maxResponseLenght,
-                    const char *contentTypeValue) {
+void addContentTypeAndLenght(char *response, const int maxResponseLenght,
+                             const char *contentTypeValue,
+                             const int contentLenghtValue) {
   char contentType[100];
+  char contentLenght[100];
 
   snprintf(contentType, sizeof(contentType), "Content-Type: %s\r\n",
            contentTypeValue);
   strncat(response, contentType, maxResponseLenght - strlen(response));
-}
-void addContentLenght(char *response, const int maxResponseLenght,
-                      const int contentLenghtValue) {
-  char contentLenght[100];
 
   snprintf(contentLenght, sizeof(contentLenght), "Content-Length: %d\r\n",
            contentLenghtValue);
@@ -47,8 +45,8 @@ void createResponseHeader(char *response, const int maxResponseLenght,
 
   addStatusLine(response, statusline, maxResponseLenght);
   addHeaderLine(response, getDefaultHeaderFields(), maxResponseLenght);
-  addContentType(response, maxResponseLenght, getContentType(path));
-  addContentLenght(response, maxResponseLenght, contentLenght);
+  addContentTypeAndLenght(response, maxResponseLenght, getContentType(path),
+                          contentLenght);
   strncat(response, "\r\n", maxResponseLenght - strlen(response));
 }
 

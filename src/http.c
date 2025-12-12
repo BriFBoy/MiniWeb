@@ -45,12 +45,13 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
 
     *pbody = getContent("/.errors/404.html", &statuscodes, bodySize);
     if (pbody != NULL) {
-      createResponse(pResponse, MAXBUFFSIZE, "HTTP/1.0 404 Not Found",
-                     "/.errors/404.html", *bodySize);
+      createResponseHeader(pResponse, MAXBUFFSIZE, "HTTP/1.0 404 Not Found",
+                           "/.errors/404.html", *bodySize);
 
     } else {
       addStatusLine(pResponse, "HTTP/1.0 404 Not Found\r\n", MAXBUFFSIZE);
     }
+
     break;
   case SUCCESS:
     break;

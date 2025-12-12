@@ -13,9 +13,9 @@ char *getDefaultHeaderFields();
 const char *getContentType(const char *path);
 void addContentLenght(char *response, const int maxResponseLenght,
                       const int contentLenght);
-void createResponse(char *response, const int maxResponseLenght,
-                    char *statusline, const char *path,
-                    const int contentLenght);
+void createResponseHeader(char *response, const int maxResponseLenght,
+                          char *statusline, const char *path,
+                          const int contentLenght);
 
 #endif // !HTTPBUILDER_H
 

@@ -32,7 +32,7 @@ void fixNondirectpath(httpRequest *request);
 char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
                            size_t *bodySize);
 
-static Pair G_MINE[] = {{".html", "text/html"},
+static Pair G_MIME[] = {{".html", "text/html"},
                         {".css", "text/css"},
                         {".ico", "image/x-icon"},
                         {".png", "image/png"},

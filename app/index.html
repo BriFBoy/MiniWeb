@@ -1,68 +1,28 @@
 <!DOCTYPE html>
-<html lang="no">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="/styles.css">
-    <title>Raspberry Pi — MiniWeb</title>
-  </head>
-  <body>
-    <div class="wrap">
-      <header>
-        <div class="logo">Pi</div>
-        <div>
-          <h1>Raspberry Pi</h1>
-          <p class="lead">En liten, rimelig datamaskin for læring, prosjekter og prototyping.</p>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MiniWeb Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script src="script.js"></script>
+    <nav>
+        <a href="/" class="active">Home</a>
+        <a href="/about">About</a>
+        <a href="/project">Project</a>
+    </nav>
+    <main>
+      <div class="content-box">
+        <h1>Welcome to MiniWeb Demo!</h1>
+        <p>This is a simple static website served by your C web server.</p>
+        <p>Use the links above to check out other pages.</p>
+
+        <div id="fact-container">
+          <span class="fact-label">💡 Did you know?</span>
+          <span id="fact-box"></span>
         </div>
-      </header>
-
-      <nav>
-        <a href="contact/index.html">Kontakt informasjon</a>
-        <a href="#models">Modeller</a>
-        <a href="#projects">Prosjekter</a>
-        <a href="#resources">Ressurser</a>
-      </nav>
-
-      <section class="card" id="intro">
-        <h2>Hva er Raspberry Pi?</h2>
-        <p>Raspberry Pi er en serie små, rimelige enkeltkort-datamaskiner utviklet for utdanning og hobbybruk. De kan kjøre Linux, kobles til sensorer, skjermer og nettverk, og brukes i alt fra enkle IoT-enheter til mediesentre og små servere.</p>
-      </section>
-
-      <section class="card" id="models">
-        <h2>Vanlige modeller</h2>
-        <ul class="models">
-          <li>Raspberry Pi 4 — kraftig for stasjonære prosjekter</li>
-          <li>Raspberry Pi 400 — tastatur + Pi i ett</li>
-          <li>Raspberry Pi Zero 2 W — veldig liten og energieffektiv</li>
-        </ul>
-      </section>
-
-      <section class="card" id="projects">
-        <h2>Enkle prosjekter å prøve</h2>
-        <ul>
-          <li>Mediesenter med <strong>Kodi</strong></li>
-          <li>Retro spillkonsoll med <strong>RetroPie</strong></li>
-          <li>Hjemmeautomatisering med sensorer og <strong>Home Assistant</strong></li>
-          <li>Webserver eller småtjenester (f.eks. en statisk nettside)</li>
-        </ul>
-        <a class="cta" href="#resources">Kom i gang</a>
-      </section>
-
-      <section class="card" id="resources">
-        <h2>Ressurser</h2>
-        <p>Offisiell dokumentasjon, guider og fellesskap er gode steder å lære mer:</p>
-        <ul>
-          <li><a href="https://www.raspberrypi.org/" target="_blank">raspberrypi.org</a></li>
-          <li><a href="https://www.raspberrypi.com/documentation/" target="_blank">Offisiell dokumentasjon</a></li>
-          <li><a href="https://projects.raspberrypi.org/" target="_blank">Prosjektideer</a></li>
-        </ul>
-      </section>
-
-      <footer>
-        <div>Lag en liten server, prøv noen prosjekter, og ha det gøy!</div>
-        <div style="margin-top:6px">Fil: <code>app/index.html</code></div>
-      </footer>
-    </div>
-  </body>
+      </div>
+    </main>
+</body>
 </html>

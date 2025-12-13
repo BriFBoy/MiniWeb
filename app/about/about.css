@@ -1,0 +1,76 @@
+/* Only for about.html */
+
+.content-box h1 {
+    font-size: 2.2em;
+    margin-bottom: 0.25em;
+    background: linear-gradient(90deg,#1976d2 40%,#43c6ac 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.content-box h2 {
+    font-size: 1.3em;
+    color: #1976d2;
+    margin-top: 1.8em;
+    margin-bottom: 0.5em;
+    font-weight: 700;
+    letter-spacing: .02em;
+    border-left: 5px solid #ffd600;
+    padding-left: 0.5em;
+    background: linear-gradient(90deg,#fffde4 40%,#e3eaff 100%);
+}
+
+.about-features {
+    list-style: none;
+    padding: 0;
+}
+.about-features li {
+    margin: 0.65em 0 0.65em 0;
+    padding: 0.7em 0.7em 0.7em 0.7em;
+    font-size: 1.07em;
+    position: relative;
+    background: linear-gradient(90deg,#f3f8ff 65%,#fffbe226 98%);
+    border-radius: 0.7em;
+    box-shadow: 0 1px 5px #B3DBFF22;
+    color: #26344d;
+    border-left: 3px solid #1976d2;
+}
+
+/* Inline code tag styling */
+.content-box code {
+    background: #e3eaff;
+    color: #1976d2;
+    border-radius: 0.3em;
+    padding: 0.13em 0.45em;
+    font-family: 'Fira Mono', 'Consolas', monospace;
+    font-size: 0.97em;
+    white-space: nowrap;
+}
+
+/* Quoted block philosophy */
+.about-philosophy {
+    margin: 2em 0;
+    padding: 1.15em 1.3em;
+    background: linear-gradient(100deg,#ffe57f33 80%,#fff59d33 100%);
+    border-left: 6px solid #ffd600;
+    font-style: italic;
+    color: #88581b;
+    border-radius: 0.9em;
+    font-size: 1.17em;
+    box-shadow: 0 1px 6px #ffd60022;
+}
+
+.about-steps {
+    margin: 1.3em 0 0.5em 0.7em;
+    padding-left: 1em;
+}
+.about-steps li {
+    margin-bottom: 0.6em;
+    font-size: 1.05em;
+    color: #183573;
+}
+.about-steps a {
+    color: #1976d2;
+    font-weight: bold;
+    text-decoration: underline dotted;
+}

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>About - MiniWeb Demo</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="/about/about.css">
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about" class="active">About</a>
+        <a href="/project">Project</a>
+    </nav>
+    <main>
+        <div class="content-box">
+            <h1>About MiniWeb</h1>
+            <div class="about-philosophy">
+                “Sometimes, simple is best. MiniWeb is all about serving modern web content with classic C efficiency—no frills, no excess, just ultra-fast static sites for learning, hacking, or real-world deployment.”
+            </div>
+            <h2>Why MiniWeb?</h2>
+            <ul class="about-features">
+                <li><b>Speed &amp; Simplicity:</b> No complex backend or frameworks—just serve your HTML, CSS, and static assets, instantly.</li>
+                <li><b>Tiny Footprint:</b> Blazing fast and small, MiniWeb runs on anything from a Raspberry Pi to a big server.</li>
+                <li><b>Safe By Design:</b> Serving static files means no headaches about state, injections, or authentication holes.</li>
+                <li><b>Learn &amp; Hack:</b> Dive into the C source to see how real sockets and protocols work, or use it as a base for your own server ideas!</li>
+            </ul>
+            <h2>How does it work?</h2>
+            <p>
+                MiniWeb listens for HTTP requests on your chosen port (default: <code>8080</code>), then matches requested paths like <code>/about.html</code> to files in your chosen folder—delivering them with ultra-low overhead. Unknown routes get a friendly <code>404</code>. It’s all clean C, cross-platform, and robust.
+            </p>
+            <h2>Get Started</h2>
+            <ol class="about-steps">
+                <li>Clone the <a href="https://github.com/BriFBoy/MiniWeb" target="_blank" rel="noopener">MiniWeb repository</a>.</li>
+                <li>Build it: <code>make</code> (requires a C compiler).</li>
+                <li>Run it in your project folder: <code>.bin/program</code></li>
+                <li>Open <a href="http://localhost:8080/">http://localhost:8080/</a> in your browser.</li>
+            </ol>
+            <p style="margin-top:2em;">
+                Whether you’re learning, teaching, or deploying a tiny site, <b>MiniWeb</b> keeps things simple&mdash;and secure&mdash;so you can focus on building, not debugging.
+            </p>
+        </div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>

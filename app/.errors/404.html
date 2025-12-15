@@ -1,19 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>404 - Page Not Found</title>
-  <link rel="stylesheet" href="/.errors/404.css">
+    <meta charset="UTF-8">
+    <title>404 - Page Not Found | MiniWeb Demo</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+    <style>
+    /* Emphasized 404 and message styles */
+    .notfound-header {
+        font-size: 3.3em;
+        font-weight: 900;
+        color: #1976d2;
+        margin: .35em 0 0.1em 0;
+        letter-spacing: .06em;
+    }
+    .notfound-message {
+        font-size: 1.45em;
+        font-weight: 700;
+        color: #34495e;
+        margin-bottom: .7em;
+    }
+    .notfound-desc {
+        font-size: 1.08em;
+        color: #546e7a;
+        margin-bottom: 2em;
+    }
+    .content-box .home-link {
+        display:inline-block;
+        background:#1976d2;
+        color:#fff !important;
+        text-decoration:none;
+        padding:0.75em 2em;
+        border-radius:1.1em;
+        font-weight:bold;
+        font-size:1.09em;
+        box-shadow:0 2px 10px #1565c044;
+        transition:background 0.13s;
+        margin-bottom: 1.7em;
+    }
+    .content-box .home-link:hover {
+        background: #1250a6;
+    }
+    .content-box.notfound {
+        background: linear-gradient(133deg, #ffffff99 68%, #e3eaff 100%);
+        border-left: 6px solid #ffd600;
+    }
+    @media(max-width: 600px) {
+        .notfound-header { font-size: 2em; }
+        .notfound-message { font-size: 1.05em; }
+        .notfound-desc { font-size: .95em; }
+        .content-box.notfound { border-left-width: 3px; }
+    }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1 class="error-code">404</h1>
-    <h2 class="error-message">Oops! Page Not Found</h2>
-    <p class="description">
-      The page you’re looking for doesn’t exist or has been moved.
-    </p>
-    <a href="/" class="home-button">Go Back Home</a>
-  </div>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/project">Project</a>
+    </nav>
+    <main>
+        <div class="content-box notfound" style="text-align:center;">
+            <div class="notfound-header">404</div>
+            <div class="notfound-message">Page Not Found</div>
+            <div class="notfound-desc">
+                Sorry, the page you requested doesn’t exist<br>
+                or has been moved.
+            </div>
+            <a href="/" class="home-link">← Back to Homepage</a>
+        </div>
+    </main>
+    <script src="script.js"></script>
 </body>
 </html>

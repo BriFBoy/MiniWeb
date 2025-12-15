@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <netinet/in.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -55,6 +56,7 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  signal(SIGPIPE, SIG_IGN);
   for (;;) {
 
     fflush(stdout);

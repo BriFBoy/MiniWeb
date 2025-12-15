@@ -1,13 +1,28 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <title>Hello World</title>
-  </head>
-  <body>
-    
-    <h1>Hello World</h1>
-    <p>Sending this to you from a wacky server writen in c</p>
-  </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MiniWeb Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script src="script.js"></script>
+    <nav>
+        <a href="/" class="active">Home</a>
+        <a href="/about">About</a>
+        <a href="/project">Project</a>
+    </nav>
+    <main>
+      <div class="content-box">
+        <h1>Welcome to MiniWeb Demo!</h1>
+        <p>This is a simple static website served by your C web server.</p>
+        <p>Use the links above to check out other pages.</p>
+
+        <div id="fact-container">
+          <span class="fact-label">💡 Did you know?</span>
+          <span id="fact-box"></span>
+        </div>
+      </div>
+    </main>
+</body>
 </html>

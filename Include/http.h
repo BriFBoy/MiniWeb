@@ -34,6 +34,7 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
 
 static Pair G_MIME[] = {{".html", "text/html"},
                         {".css", "text/css"},
+                        {".js", "text/javascript"},
                         {".ico", "image/x-icon"},
                         {".png", "image/png"},
                         {".jpg", "image/jpg"},

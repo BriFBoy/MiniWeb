@@ -15,7 +15,6 @@ body {
     color: #222;
 }
 
-/* COOL MODERN NAVIGATION BAR */
 nav {
     background: linear-gradient(95deg, #1976d2 60%, #43c6ac 100%);
     backdrop-filter: blur(7px) saturate(1.1);
@@ -126,26 +125,6 @@ nav a.active::after, nav a:hover::after {
     color: #34495e;
 }
 
-/* Back to top button */
-#back-to-top {
-    position: absolute;
-    right: 1.1em;
-    bottom: 1.1em;
-    padding: .7em 1.2em;
-    border: none;
-    border-radius: 8px;
-    background: #1976d2;
-    color: #fff;
-    cursor: pointer;
-    font-size: 1em;
-    box-shadow: 0 2px 8px #1565c044;
-    display: none;
-    z-index: 2;
-}
-#back-to-top:hover {
-    background: #1565c0;
-}
-
 /* Fact container inline / home page style */
 #fact-container {
     display: block;
@@ -215,7 +194,7 @@ main {
         padding: 0.7em 0.5em;
         margin: 0.9em 0 0 0;
     }
-    #fact-btn, #back-to-top {
+    #fact-btn {
         font-size: .93em;
         padding: .6em 1em;
     }

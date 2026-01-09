@@ -29,6 +29,7 @@ unsigned char *getContent(char *path, enum statusCodes *statuscode,
     } else {
       printf("Failed to malloc\n");
       *statuscode = INTERNAL_ERROR;
+      *outSize = 0;
       return NULL;
     }
 
@@ -37,6 +38,7 @@ unsigned char *getContent(char *path, enum statusCodes *statuscode,
   } else {
     printf("Failed to open file\n");
     *statuscode = FILE_NOT_FOUND;
+    *outSize = 0;
     return NULL;
   }
 }

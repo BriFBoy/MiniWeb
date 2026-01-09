@@ -38,7 +38,7 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
   switch (statuscodes) {
   case INTERNAL_ERROR:
 
-    addStatusLine(pResponse, "HTTP/1.0 500 INTERNAL SERVER ERROR\r\n",
+    addStatusLine(pResponse, "HTTP/1.0 500 Internal Server Error\r\n",
                   MAXBUFFSIZE);
     break;
   case FILE_NOT_FOUND:
@@ -54,6 +54,17 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
 
     break;
   case SUCCESS:
+    break;
+  case PARSING_FAILED:
+    *pbody = getContent("/.errors/500.html", &statuscodes, bodySize);
+    if (!pbody && bodySize <= 0) {
+      addStatusLine(pResponse, "HTTP/1.0 500 Internal Server Error\r\n",
+                    MAXBUFFSIZE);
+    }
+    createResponseHeader(pResponse, MAXBUFFSIZE,
+                         "HTTP/1.0 500 Internal Server Error",
+                         "/.errors/500.html", *bodySize);
+
     break;
   }
   return pResponse;

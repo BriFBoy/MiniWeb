@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 
     fflush(stdout);
     clientfd = accept(socket_fd, NULL, NULL);
-    if (clientfd >= 0)
+    if (clientfd <= 0)
       continue;
     setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
     serveConnection(clientfd);
@@ -77,7 +77,6 @@ int main(int argc, char *argv[]) {
 }
 
 void serveConnection(const int clientfd) {
-  printf("Serveing connection\n");
   char httprequest[MAXBUFFSIZE];
   memset(&httprequest, 0, sizeof(httprequest));
   httprequest[0] = '\0';
@@ -101,8 +100,8 @@ void serveConnection(const int clientfd) {
     unsigned char *body;
     size_t bodySize;
 
-    response.pResponse = getResponseFromError(INTERNAL_ERROR, &body, &bodySize);
-    write(clientfd, response.pResponse, response.responseLenght);
+    response.pResponse = getResponseFromError(PARSING_FAILED, &body, &bodySize);
+    write(clientfd, response.pResponse, strlen(response.pResponse));
   }
 
   close(clientfd);

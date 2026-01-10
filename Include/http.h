@@ -21,7 +21,6 @@ typedef struct {
   // body not implemented yeat
 } httpRequest;
 
-// Response struct
 typedef struct {
   char *pResponse;
   unsigned char *pBody;

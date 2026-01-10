@@ -5,6 +5,7 @@
 #include "../Include/pars.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
+#include <bits/types/struct_timeval.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -17,6 +18,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+int serverSetup(int maxBacklog, short port);
 void serveConnection(const int clientfd);
 void sendResponse(const int clientfd, httpRequest *request, Response *response);
 void readIncommingData(char *buff, int *bytesread, const int clientfd,
@@ -32,43 +34,54 @@ void checkRunState() {
 int main(int argc, char *argv[]) {
   checkRunState();
 
-  int socket_fd;
+  int maxBacklog = 500;
   short port = 8080;
-  struct sockaddr_in serveraddr;
   int clientfd;
+  int socket_fd = serverSetup(maxBacklog, port);
 
-  socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-
-  bzero(&serveraddr, sizeof(serveraddr));
-  serveraddr.sin_family = AF_INET;
-  serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  serveraddr.sin_port = htons(port);
-
-  int optval = 1;
-  setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-  if (bind(socket_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
-    printf("Error binding port\n");
-    exit(EXIT_FAILURE);
-  }
-
-  if (listen(socket_fd, 50) < 0) {
-    printf("Error listening to socket\n");
-    exit(EXIT_FAILURE);
-  }
-
-  signal(SIGPIPE, SIG_IGN);
+  struct timeval timeout;
+  timeout.tv_sec = 10;
+  timeout.tv_usec = 0;
   for (;;) {
 
     fflush(stdout);
     clientfd = accept(socket_fd, NULL, NULL);
+    if (clientfd <= 0)
+      continue;
+    setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
     serveConnection(clientfd);
   }
 
   return EXIT_SUCCESS;
 }
 
+int serverSetup(int maxBacklog, short port) {
+  int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+  int optval = 1;
+  setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+  signal(SIGPIPE, SIG_IGN);
+
+  struct sockaddr_in serveraddr = {0};
+  serveraddr.sin_family = AF_INET;
+  serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+  serveraddr.sin_port = htons(port);
+
+  if (bind(socket_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
+    printf("Error binding port\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (listen(socket_fd, maxBacklog) < 0) {
+    printf("Error listening to socket\n");
+    exit(EXIT_FAILURE);
+  }
+  return socket_fd;
+}
+
 void serveConnection(const int clientfd) {
   char httprequest[MAXBUFFSIZE];
+  memset(&httprequest, 0, sizeof(httprequest));
   httprequest[0] = '\0';
   char buff[MAXBUFFSIZE];
   Response response;
@@ -90,8 +103,8 @@ void serveConnection(const int clientfd) {
     unsigned char *body;
     size_t bodySize;
 
-    response.pResponse = getResponseFromError(INTERNAL_ERROR, &body, &bodySize);
-    write(clientfd, response.pResponse, response.responseLenght);
+    response.pResponse = getResponseFromError(PARSING_FAILED, &body, &bodySize);
+    write(clientfd, response.pResponse, strlen(response.pResponse));
   }
 
   close(clientfd);
@@ -99,6 +112,7 @@ void serveConnection(const int clientfd) {
 
 void readIncommingData(char *buff, int *bytesread, const int clientfd,
                        char *httprequest) {
+  httprequest[0] = '\0';
   int n;
   while ((n = read(clientfd, buff, MAXBUFFSIZE - NULL_TERMINATOR)) > 0) {
     buff[n] = '\0';
@@ -122,21 +136,9 @@ void sendResponse(const int clientfd, httpRequest *request,
   response->pBody =
       getContent(request->requestLine.path, &statuscode, &bodySize);
 
-  if (response->pBody != NULL) {
-    response->pResponse = malloc(MAXBUFFSIZE);
-    response->responseLenght = MAXBUFFSIZE;
-    char content_lenght[100];
+  if (response->pBody == NULL) {
 
-    createResponseHeader(response->pResponse, response->responseLenght,
-                         "HTTP/1.0 200 OK", request->requestLine.path,
-                         bodySize);
-
-    write(clientfd, response->pResponse, strlen(response->pResponse));
-    write(clientfd, response->pBody, bodySize);
-
-    free(response->pBody);
-    free(response->pResponse);
-  } else {
+    // sends the correct error
     response->pResponse =
         getResponseFromError(statuscode, &response->pBody, &bodySize);
 
@@ -145,5 +147,20 @@ void sendResponse(const int clientfd, httpRequest *request,
 
     free(response->pResponse);
     free(response->pBody);
+
+    return;
   }
+
+  response->pResponse = malloc(MAXBUFFSIZE);
+  response->responseLenght = MAXBUFFSIZE;
+  char content_lenght[100];
+
+  createResponseHeader(response->pResponse, response->responseLenght,
+                       "HTTP/1.0 200 OK", request->requestLine.path, bodySize);
+
+  write(clientfd, response->pResponse, strlen(response->pResponse));
+  write(clientfd, response->pBody, bodySize);
+
+  free(response->pBody);
+  free(response->pResponse);
 }

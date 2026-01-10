@@ -6,71 +6,79 @@
 
 enum status { METADATA, HEADER, BODY };
 
-httpRequest *parshttp(char *httprequest) {
+int tokenizeStatusLine(char *psavestat2, httpRequest *request) {
   char *pstr;
-  int status = METADATA;
-  httpRequest *request = malloc(sizeof(httpRequest));
-  char *psavestat1 = httprequest;
-  char *pline;
-  char *psavestat2;
-  int requestlenght = 0;
+  pstr = strtok_r(psavestat2, " ", &psavestat2);
+  if (!pstr)
+    return PARSING_FAILED;
+  strncpy(request->requestLine.method, pstr,
+          sizeof(request->requestLine.method) - NULL_TERMINATOR);
 
-  pline = strtok_r(httprequest, "\r\n", &psavestat1);
+  pstr = strtok_r(NULL, " ", &psavestat2);
+  if (!pstr)
+    return PARSING_FAILED;
+  strncpy(request->requestLine.path, pstr,
+          sizeof(request->requestLine.path) - NULL_TERMINATOR);
+
+  pstr = strtok_r(NULL, " ", &psavestat2);
+  if (!pstr)
+    return PARSING_FAILED;
+  strncpy(request->requestLine.version, pstr,
+          sizeof(request->requestLine.version) - NULL_TERMINATOR);
+  strtrim(request->requestLine.version);
+
+  return SUCCESS;
+}
+
+int tokenizeHeaderLine(char *pline, httpRequest *request, int *headerlength) {
+  char *pstr;
+
+  pstr = strtok_r(pline, ":", &pline);
+  if (pstr == NULL)
+    return PARSING_FAILED;
+  strncpy(request->header[*headerlength].key, pstr,
+          sizeof(request->header->key) - NULL_TERMINATOR);
+
+  pstr = strtok_r(NULL, "", &pline);
+  if (pstr == NULL)
+    return PARSING_FAILED;
+  strncpy(request->header[*headerlength].value, pstr,
+          sizeof(request->header->value) - NULL_TERMINATOR);
+  strtrim(request->header[*headerlength].value);
+
+  headerlength++;
+
+  return SUCCESS;
+}
+
+httpRequest *parshttp(char *httprequest) {
+  int status = METADATA;
+  httpRequest *request = calloc(1, sizeof(httpRequest));
+  int headerlength = 0;
+  char *psavestat1 = httprequest;
+  char *pline = strtok_r(httprequest, "\r\n", &psavestat1);
+
   do {
-    if (pline == NULL) {
+    if (!pline)
       break;
-    }
-    psavestat2 = pline;
 
     switch (status) {
     case METADATA: {
-      pstr = strtok_r(psavestat2, " ", &psavestat2);
-      if (pstr != NULL) {
-        strncpy(request->requestLine.method, pstr, strlen(pstr) + 1);
-      } else {
-        return NULL;
-      }
-      pstr = strtok_r(NULL, " ", &psavestat2);
-      if (pstr != NULL) {
-        strncpy(request->requestLine.path, pstr, strlen(pstr) + 1);
-      } else {
-        return NULL;
-      }
-      pstr = strtok_r(NULL, " ", &psavestat2);
-      if (pstr != NULL) {
-        strncpy(request->requestLine.version, pstr, strlen(pstr) + 1);
-        strtrim(request->requestLine.version);
-      } else {
-        return NULL;
-      }
 
+      tokenizeStatusLine(pline, request);
       status = HEADER;
       break;
     }
     case HEADER:
       while ((pline = strtok_r(NULL, "\r\n", &psavestat1)) != NULL) {
-
-        pstr = strtok_r(pline, ":", &psavestat2);
-        if (pstr == NULL)
-          break;
-        strncpy(request->header[requestlenght].key, pstr, strlen(pstr) + 1);
-
-        pstr = strtok_r(NULL, "", &psavestat2);
-        if (pstr == NULL)
-          break;
-        strncpy(request->header[requestlenght].value, pstr, strlen(pstr) + 1);
-
-        strtrim(request->header[requestlenght].value);
-
-        requestlenght++;
+        tokenizeHeaderLine(pline, request, &headerlength);
       }
-      request->headerlenght = requestlenght;
+      request->headerlenght = headerlength;
       break;
     case BODY:
       // Body not suported
       break;
     }
-
   } while ((pline = strtok_r(NULL, "\r\n", &psavestat1)) != NULL);
   return request;
 }

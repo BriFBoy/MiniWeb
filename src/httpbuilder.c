@@ -20,16 +20,14 @@ void addHeaderLine(char *response, const char *headerfield,
 void addContentTypeAndLenght(char *response, const int maxResponseLenght,
                              const char *contentTypeValue,
                              const int contentLenghtValue) {
-  char contentType[100];
-  char contentLenght[100];
+  char buffer[150];
+  int remaining = maxResponseLenght - strlen(response);
 
-  snprintf(contentType, sizeof(contentType), "Content-Type: %s\r\n",
-           contentTypeValue);
-  strncat(response, contentType, maxResponseLenght - strlen(response));
-
-  snprintf(contentLenght, sizeof(contentLenght), "Content-Length: %d\r\n",
-           contentLenghtValue);
-  strncat(response, contentLenght, maxResponseLenght - strlen(response));
+  snprintf(buffer, remaining,
+           "Content-Length: %d\r\n"
+           "Content-Type: %s\r\n",
+           contentLenghtValue, contentTypeValue);
+  strncat(response, buffer, remaining);
 }
 
 char *getDefaultHeaderFields() {

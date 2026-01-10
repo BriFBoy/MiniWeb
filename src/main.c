@@ -18,6 +18,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+int serverSetup(int maxBacklog, short port);
 void serveConnection(const int clientfd);
 void sendResponse(const int clientfd, httpRequest *request, Response *response);
 void readIncommingData(char *buff, int *bytesread, const int clientfd,
@@ -33,32 +34,10 @@ void checkRunState() {
 int main(int argc, char *argv[]) {
   checkRunState();
 
-  int socket_fd;
   int maxBacklog = 500;
   short port = 8080;
-  struct sockaddr_in serveraddr;
   int clientfd;
-
-  socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-
-  int optval = 1;
-  setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-  signal(SIGPIPE, SIG_IGN);
-
-  bzero(&serveraddr, sizeof(serveraddr));
-  serveraddr.sin_family = AF_INET;
-  serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  serveraddr.sin_port = htons(port);
-
-  if (bind(socket_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
-    printf("Error binding port\n");
-    exit(EXIT_FAILURE);
-  }
-
-  if (listen(socket_fd, maxBacklog) < 0) {
-    printf("Error listening to socket\n");
-    exit(EXIT_FAILURE);
-  }
+  int socket_fd = serverSetup(maxBacklog, port);
 
   struct timeval timeout;
   timeout.tv_sec = 10;
@@ -74,6 +53,30 @@ int main(int argc, char *argv[]) {
   }
 
   return EXIT_SUCCESS;
+}
+
+int serverSetup(int maxBacklog, short port) {
+  int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+  int optval = 1;
+  setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+  signal(SIGPIPE, SIG_IGN);
+
+  struct sockaddr_in serveraddr = {0};
+  serveraddr.sin_family = AF_INET;
+  serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+  serveraddr.sin_port = htons(port);
+
+  if (bind(socket_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
+    printf("Error binding port\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (listen(socket_fd, maxBacklog) < 0) {
+    printf("Error listening to socket\n");
+    exit(EXIT_FAILURE);
+  }
+  return socket_fd;
 }
 
 void serveConnection(const int clientfd) {

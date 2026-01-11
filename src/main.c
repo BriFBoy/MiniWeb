@@ -1,12 +1,15 @@
 #include "../Include/content.h"
+#include "../Include/dataStructure.h"
 #include "../Include/global.h"
 #include "../Include/http.h"
 #include "../Include/httpbuilder.h"
 #include "../Include/pars.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
+#include <bits/pthreadtypes.h>
 #include <bits/types/struct_timeval.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -24,6 +27,10 @@ void sendResponse(const int clientfd, httpRequest *request, Response *response);
 void readIncommingData(char *buff, int *bytesread, const int clientfd,
                        char *httprequest);
 
+pthread_t thread_pool[20];
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond_var = PTHREAD_COND_INITIALIZER;
+
 void checkRunState() {
   if (getenv("MINIWEB_SOURCE") == NULL) {
     printf("Missing env MINIWEB_SOURCE\n");
@@ -31,14 +38,39 @@ void checkRunState() {
   }
 }
 
+void *threadRunner(void *arg) {
+  int client;
+  while (true) {
+
+    pthread_mutex_lock(&mutex);
+    if ((client = dequeue()) == -1) {
+      pthread_cond_wait(&cond_var, &mutex);
+    }
+    pthread_mutex_unlock(&mutex);
+
+    if (client != -1) {
+      printf("serveing Connection\n");
+      serveConnection(client);
+    }
+  }
+  return NULL;
+}
+
 int main(int argc, char *argv[]) {
   checkRunState();
 
+  int numThreads = 20;
   int maxBacklog = 500;
   short port = 8080;
   int clientfd;
   int socket_fd = serverSetup(maxBacklog, port);
 
+  for (int i = 0; i < numThreads; i++) {
+    pthread_create(&thread_pool[i], NULL, threadRunner, NULL);
+    printf("Thead created\n");
+  }
+
+  printf("Hello World\n");
   struct timeval timeout;
   timeout.tv_sec = 10;
   timeout.tv_usec = 0;
@@ -48,8 +80,12 @@ int main(int argc, char *argv[]) {
     clientfd = accept(socket_fd, NULL, NULL);
     if (clientfd <= 0)
       continue;
+    pthread_mutex_lock(&mutex);
+    enqueue(clientfd);
+    pthread_cond_signal(&cond_var);
+    pthread_mutex_unlock(&mutex);
+    printf("enqueued\n");
     setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-    serveConnection(clientfd);
   }
 
   return EXIT_SUCCESS;

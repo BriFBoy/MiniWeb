@@ -21,7 +21,11 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-int serverSetup(int maxBacklog, short port);
+#define MAXBACKLOG 500
+#define NUMTHREADS 20
+#define PORT 8080
+
+int serverSetup();
 void serveConnection(const int clientfd);
 void sendResponse(const int clientfd, httpRequest *request, Response *response);
 void readIncommingData(char *buff, int *bytesread, const int clientfd,
@@ -59,21 +63,16 @@ void *threadRunner(void *arg) {
 int main(int argc, char *argv[]) {
   checkRunState();
 
-  int numThreads = 20;
-  int maxBacklog = 500;
-  short port = 8080;
   int clientfd;
-  int socket_fd = serverSetup(maxBacklog, port);
+  int socket_fd = serverSetup();
 
-  for (int i = 0; i < numThreads; i++) {
+  for (int i = 0; i < NUMTHREADS; i++) {
     pthread_create(&thread_pool[i], NULL, threadRunner, NULL);
-    printf("Thead created\n");
   }
 
-  printf("Hello World\n");
-  struct timeval timeout;
-  timeout.tv_sec = 10;
-  timeout.tv_usec = 0;
+  struct timeval clientTimeout;
+  clientTimeout.tv_sec = 10;
+  clientTimeout.tv_usec = 0;
   for (;;) {
 
     fflush(stdout);
@@ -85,13 +84,14 @@ int main(int argc, char *argv[]) {
     pthread_cond_signal(&cond_var);
     pthread_mutex_unlock(&mutex);
     printf("enqueued\n");
-    setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &clientTimeout,
+               sizeof(clientTimeout));
   }
 
   return EXIT_SUCCESS;
 }
 
-int serverSetup(int maxBacklog, short port) {
+int serverSetup() {
   int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   int optval = 1;
@@ -101,14 +101,14 @@ int serverSetup(int maxBacklog, short port) {
   struct sockaddr_in serveraddr = {0};
   serveraddr.sin_family = AF_INET;
   serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  serveraddr.sin_port = htons(port);
+  serveraddr.sin_port = htons(PORT);
 
   if (bind(socket_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
     printf("Error binding port\n");
     exit(EXIT_FAILURE);
   }
 
-  if (listen(socket_fd, maxBacklog) < 0) {
+  if (listen(socket_fd, MAXBACKLOG) < 0) {
     printf("Error listening to socket\n");
     exit(EXIT_FAILURE);
   }

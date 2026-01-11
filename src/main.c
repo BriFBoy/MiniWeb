@@ -1,12 +1,15 @@
 #include "../Include/content.h"
+#include "../Include/dataStructure.h"
 #include "../Include/global.h"
 #include "../Include/http.h"
 #include "../Include/httpbuilder.h"
 #include "../Include/pars.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
+#include <bits/pthreadtypes.h>
 #include <bits/types/struct_timeval.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -18,11 +21,19 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-int serverSetup(int maxBacklog, short port);
+#define MAXBACKLOG 500
+#define NUMTHREADS 20
+#define PORT 8080
+
+int serverSetup();
 void serveConnection(const int clientfd);
 void sendResponse(const int clientfd, httpRequest *request, Response *response);
 void readIncommingData(char *buff, int *bytesread, const int clientfd,
                        char *httprequest);
+
+pthread_t thread_pool[20];
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond_var = PTHREAD_COND_INITIALIZER;
 
 void checkRunState() {
   if (getenv("MINIWEB_SOURCE") == NULL) {
@@ -31,31 +42,56 @@ void checkRunState() {
   }
 }
 
+void *threadRunner(void *arg) {
+  int client;
+  while (true) {
+
+    pthread_mutex_lock(&mutex);
+    if ((client = dequeue()) == -1) {
+      pthread_cond_wait(&cond_var, &mutex);
+    }
+    pthread_mutex_unlock(&mutex);
+
+    if (client != -1) {
+      printf("serveing Connection\n");
+      serveConnection(client);
+    }
+  }
+  return NULL;
+}
+
 int main(int argc, char *argv[]) {
   checkRunState();
 
-  int maxBacklog = 500;
-  short port = 8080;
   int clientfd;
-  int socket_fd = serverSetup(maxBacklog, port);
+  int socket_fd = serverSetup();
 
-  struct timeval timeout;
-  timeout.tv_sec = 10;
-  timeout.tv_usec = 0;
+  for (int i = 0; i < NUMTHREADS; i++) {
+    pthread_create(&thread_pool[i], NULL, threadRunner, NULL);
+  }
+
+  struct timeval clientTimeout;
+  clientTimeout.tv_sec = 10;
+  clientTimeout.tv_usec = 0;
   for (;;) {
 
     fflush(stdout);
     clientfd = accept(socket_fd, NULL, NULL);
     if (clientfd <= 0)
       continue;
-    setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-    serveConnection(clientfd);
+    pthread_mutex_lock(&mutex);
+    enqueue(clientfd);
+    pthread_cond_signal(&cond_var);
+    pthread_mutex_unlock(&mutex);
+    printf("enqueued\n");
+    setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &clientTimeout,
+               sizeof(clientTimeout));
   }
 
   return EXIT_SUCCESS;
 }
 
-int serverSetup(int maxBacklog, short port) {
+int serverSetup() {
   int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   int optval = 1;
@@ -65,14 +101,14 @@ int serverSetup(int maxBacklog, short port) {
   struct sockaddr_in serveraddr = {0};
   serveraddr.sin_family = AF_INET;
   serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  serveraddr.sin_port = htons(port);
+  serveraddr.sin_port = htons(PORT);
 
   if (bind(socket_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
     printf("Error binding port\n");
     exit(EXIT_FAILURE);
   }
 
-  if (listen(socket_fd, maxBacklog) < 0) {
+  if (listen(socket_fd, MAXBACKLOG) < 0) {
     printf("Error listening to socket\n");
     exit(EXIT_FAILURE);
   }

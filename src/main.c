@@ -1,4 +1,5 @@
 #include "../Include/content.h"
+#include "../Include/logging.h"
 #include "../Include/dataStructure.h"
 #include "../Include/global.h"
 #include "../Include/http.h"
@@ -61,6 +62,7 @@ void *threadRunner(void *arg) {
 }
 
 int main(int argc, char *argv[]) {
+  LOG_INFO("Starting...");
   checkRunState();
 
   int clientfd;

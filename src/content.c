@@ -1,5 +1,5 @@
-
 #include "../Include/global.h"
+#include "../Include/logging.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +24,7 @@ unsigned char *getContent(char *path, enum statusCodes *statuscode,
 
     httpbody = malloc(stat.st_size);
     if (!httpbody) {
-      printf("Failed to malloc\n");
+      LOG_FATAL("Unable to Malloc");
       *statuscode = INTERNAL_ERROR;
       *outSize = 0;
       return NULL;
@@ -40,7 +40,7 @@ unsigned char *getContent(char *path, enum statusCodes *statuscode,
     fclose(file);
     return httpbody;
   } else {
-    printf("Failed to open file\n");
+    LOG_WARN("Failed to get file");
     *statuscode = FILE_NOT_FOUND;
     *outSize = 0;
     return NULL;

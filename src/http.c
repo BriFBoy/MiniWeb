@@ -2,6 +2,7 @@
 #include "../Include/content.h"
 #include "../Include/global.h"
 #include "../Include/httpbuilder.h"
+#include "../Include/logging.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +31,7 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
                            size_t *bodySize) {
   char *pResponse = malloc(MAXBUFFSIZE);
   if (pResponse == NULL) {
-    printf("Unable to malloc in getResponseFromError");
+    LOG_FATAL("Unable to Malloc");
     return NULL;
   }
   pResponse[0] = '\0';

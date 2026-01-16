@@ -54,7 +54,6 @@ const char *getContentType(const char *path) {
     for (int i = 0; i < (sizeof(G_MIME) / sizeof(G_MIME[0])); i++) {
 
       if (strcmp(G_MIME[i].key, fileextention) == 0) {
-        printf("%s\n", G_MIME[i].value);
         return G_MIME[i].value;
       }
     }

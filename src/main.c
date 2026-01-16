@@ -3,6 +3,7 @@
 #include "../Include/global.h"
 #include "../Include/http.h"
 #include "../Include/httpbuilder.h"
+#include "../Include/logging.h"
 #include "../Include/pars.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
@@ -37,7 +38,7 @@ pthread_cond_t cond_var = PTHREAD_COND_INITIALIZER;
 
 void checkRunState() {
   if (getenv("MINIWEB_SOURCE") == NULL) {
-    printf("Missing env MINIWEB_SOURCE\n");
+    LOG_FATAL("Missing env MINIWEB_SOURCE");
     exit(EXIT_FAILURE);
   }
 }
@@ -53,7 +54,6 @@ void *threadRunner(void *arg) {
     pthread_mutex_unlock(&mutex);
 
     if (client != -1) {
-      printf("serveing Connection\n");
       serveConnection(client);
     }
   }
@@ -61,6 +61,7 @@ void *threadRunner(void *arg) {
 }
 
 int main(int argc, char *argv[]) {
+  LOG_INFO("Starting...");
   checkRunState();
 
   int clientfd;
@@ -83,7 +84,7 @@ int main(int argc, char *argv[]) {
     enqueue(clientfd);
     pthread_cond_signal(&cond_var);
     pthread_mutex_unlock(&mutex);
-    printf("enqueued\n");
+    LOG_INFO("Queued request");
     setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &clientTimeout,
                sizeof(clientTimeout));
   }
@@ -104,12 +105,12 @@ int serverSetup() {
   serveraddr.sin_port = htons(PORT);
 
   if (bind(socket_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
-    printf("Error binding port\n");
+    LOG_FATAL("Error binding port");
     exit(EXIT_FAILURE);
   }
 
   if (listen(socket_fd, MAXBACKLOG) < 0) {
-    printf("Error listening to socket\n");
+    LOG_FATAL("Error listening to port");
     exit(EXIT_FAILURE);
   }
   return socket_fd;
@@ -127,15 +128,18 @@ void serveConnection(const int clientfd) {
   httpRequest *parsedRequest = parshttp(httprequest);
 
   if (parsedRequest) {
-    printf("%s %s %s\n", parsedRequest->requestLine.method,
-           parsedRequest->requestLine.path, parsedRequest->requestLine.version);
+    char log[200];
+    snprintf(log, sizeof(log), "%s %s %s", parsedRequest->requestLine.method,
+             parsedRequest->requestLine.path,
+             parsedRequest->requestLine.version);
+    LOG_INFO(log);
 
     fixNondirectpath(parsedRequest);
     sendResponse(clientfd, parsedRequest, &response);
 
     free(parsedRequest);
   } else {
-    printf("Error parsing http\n");
+    LOG_ERROR("Error parsing http");
     unsigned char *body;
     size_t bodySize;
 

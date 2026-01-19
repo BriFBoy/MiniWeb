@@ -11,7 +11,7 @@ FROM archlinux:latest
 
 WORKDIR /WORK
 
-COPY --from=builder /WORK/app/* /WORK/app/
+COPY --from=builder /WORK/app/ /WORK/app/
 COPY --from=builder /WORK/bin/program /WORK/program
 
 ENV MINIWEB_SOURCE=./app

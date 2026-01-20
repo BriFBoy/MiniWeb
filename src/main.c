@@ -127,18 +127,7 @@ void serveConnection(const int clientfd) {
   readIncommingData(buff, &bytesread, clientfd, httprequest);
   httpRequest *parsedRequest = parshttp(httprequest);
 
-  if (parsedRequest) {
-    char log[200];
-    snprintf(log, sizeof(log), "%s %s %s", parsedRequest->requestLine.method,
-             parsedRequest->requestLine.path,
-             parsedRequest->requestLine.version);
-    LOG_INFO(log);
-
-    fixNondirectpath(parsedRequest);
-    sendResponse(clientfd, parsedRequest, &response);
-
-    free(parsedRequest);
-  } else {
+  if (!parsedRequest) {
     LOG_ERROR("Error parsing http");
     unsigned char *body;
     size_t bodySize;
@@ -147,6 +136,29 @@ void serveConnection(const int clientfd) {
     write(clientfd, response.pResponse, strlen(response.pResponse));
   }
 
+  // Only GET method Supported
+  if (strcmp(parsedRequest->requestLine.method, "GET") != 0) {
+    LOG_WARN("Unsupported method");
+    unsigned char *body;
+    size_t bodySize;
+
+    response.pResponse =
+        getResponseFromError(METHOD_NOT_ALLOWED, &body, &bodySize);
+    write(clientfd, response.pResponse, strlen(response.pResponse));
+  } else {
+
+    char log[200];
+    snprintf(log, sizeof(log), "%s %s %s", parsedRequest->requestLine.method,
+             parsedRequest->requestLine.path,
+             parsedRequest->requestLine.version);
+    LOG_INFO(log);
+
+    // if the request is valid, find the correct file and send it
+    fixNondirectpath(parsedRequest);
+    sendResponse(clientfd, parsedRequest, &response);
+  }
+
+  free(parsedRequest);
   close(clientfd);
 }
 
@@ -155,12 +167,13 @@ void readIncommingData(char *buff, int *bytesread, const int clientfd,
   httprequest[0] = '\0';
   int n;
   while ((n = read(clientfd, buff, MAXBUFFSIZE - NULL_TERMINATOR)) > 0) {
-    buff[n] = '\0';
     *bytesread += n;
 
     if (*bytesread > MAXBUFFSIZE) {
       break;
     }
+
+    buff[n] = '\0';
     strncat(httprequest, buff,
             MAXBUFFSIZE - strlen(httprequest) - NULL_TERMINATOR);
 

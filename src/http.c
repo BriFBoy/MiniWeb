@@ -67,6 +67,16 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
                          "/.errors/500.html", *bodySize);
 
     break;
+  case METHOD_NOT_ALLOWED:
+    *pbody = getContent("/.errors/405.html", &statuscodes, bodySize);
+    if (!pbody || bodySize <= 0) {
+      addStatusLine(pResponse, "HTTP/1.0 405 Method Not Allowed\r\n",
+                    MAXBUFFSIZE);
+    }
+    createResponseHeader(pResponse, MAXBUFFSIZE,
+                         "HTTP/1.0 405 Method Not Allowed ",
+                         "/.errors/500.html", *bodySize);
+    break;
   }
   return pResponse;
 }

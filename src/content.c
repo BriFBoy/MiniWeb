@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-unsigned char *getContent(char *path, enum statusCodes *statuscode,
+unsigned char *getContent(const char *path, enum statusCodes *statuscode,
                           size_t *outSize) {
   // gets the path to the website source code (html, css etc.)
   const char *APP = getenv("MINIWEB_SOURCE");
@@ -17,15 +17,16 @@ unsigned char *getContent(char *path, enum statusCodes *statuscode,
 
   snprintf(filepath, sizeof(filepath), "%s%s", APP, path);
 
+  // checks to see if the file is inside the website root directory
   if (strstr(filepath, "..") != NULL) {
     *statuscode = FILE_NOT_FOUND;
     return NULL;
   }
-
   if (strncmp(filepath, APP, strlen(APP)) != 0) {
     *statuscode = FILE_NOT_FOUND;
     return NULL;
   }
+
   FILE *file = fopen(filepath, "rb");
   if (file != NULL) {
     int fd = fileno(file);

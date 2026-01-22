@@ -28,7 +28,8 @@
 
 int serverSetup();
 void serveConnection(const int clientfd);
-void sendResponse(const int clientfd, httpRequest *request, Response *response);
+void sendResponse(const int clientfd, const httpRequest *request,
+                  Response *response);
 void readIncommingData(char *buff, int *bytesread, const int clientfd,
                        char *httprequest);
 
@@ -80,11 +81,12 @@ int main(int argc, char *argv[]) {
     clientfd = accept(socket_fd, NULL, NULL);
     if (clientfd <= 0)
       continue;
+
     pthread_mutex_lock(&mutex);
     enqueue(clientfd);
     pthread_cond_signal(&cond_var);
     pthread_mutex_unlock(&mutex);
-    LOG_INFO("Queued request");
+
     setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &clientTimeout,
                sizeof(clientTimeout));
   }
@@ -182,7 +184,7 @@ void readIncommingData(char *buff, int *bytesread, const int clientfd,
     }
   }
 }
-void sendResponse(const int clientfd, httpRequest *request,
+void sendResponse(const int clientfd, const httpRequest *request,
                   Response *response) {
   enum statusCodes statuscode = SUCCESS;
   size_t bodySize;

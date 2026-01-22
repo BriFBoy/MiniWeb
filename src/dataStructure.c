@@ -4,7 +4,7 @@
 ListNode *head = NULL;
 ListNode *tail = NULL;
 
-void enqueue(int value) {
+void enqueue(const int value) {
   ListNode *node = malloc(sizeof(ListNode));
   node->value = value;
   node->next = NULL;

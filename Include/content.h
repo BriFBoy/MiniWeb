@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 
-unsigned char *getContent(char *path, enum statusCodes *statuscode,
+unsigned char *getContent(const char *path, enum statusCodes *statuscode,
                           size_t *outSize);
 
 #endif // CONTENT_H

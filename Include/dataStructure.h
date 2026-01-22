@@ -2,7 +2,7 @@
 #define DATASTRUCTURE_H
 
 int dequeue();
-void enqueue(int value);
+void enqueue(const int value);
 struct ListNode {
   int value;
   struct ListNode *next; 

@@ -31,6 +31,7 @@ void fixNondirectpath(httpRequest *request);
 char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
                            size_t *bodySize);
 
+// the MIMI types used for getting the content type
 static Pair G_MIME[] = {{".html", "text/html"},
                         {".css", "text/css"},
                         {".js", "text/javascript"},

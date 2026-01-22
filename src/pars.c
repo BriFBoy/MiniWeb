@@ -1,5 +1,6 @@
 #include "../Include/pars.h"
 #include "../Include/http.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -13,12 +14,14 @@ int tokenizeStatusLine(char *psavestat2, httpRequest *request) {
     return PARSING_FAILED;
   strncpy(request->requestLine.method, pstr,
           sizeof(request->requestLine.method) - NULL_TERMINATOR);
+  request->requestLine.method[sizeof(request->requestLine.method) - 1] = '\0';
 
   pstr = strtok_r(NULL, " ", &psavestat2);
   if (!pstr)
     return PARSING_FAILED;
   strncpy(request->requestLine.path, pstr,
           sizeof(request->requestLine.path) - NULL_TERMINATOR);
+  request->requestLine.path[sizeof(request->requestLine.path) - 1] = '\0';
 
   pstr = strtok_r(NULL, " ", &psavestat2);
   if (!pstr)
@@ -26,6 +29,7 @@ int tokenizeStatusLine(char *psavestat2, httpRequest *request) {
   strncpy(request->requestLine.version, pstr,
           sizeof(request->requestLine.version) - NULL_TERMINATOR);
   strtrim(request->requestLine.version);
+  request->requestLine.version[sizeof(request->requestLine.version) - 1] = '\0';
 
   return SUCCESS;
 }
@@ -57,6 +61,7 @@ httpRequest *parshttp(char *httprequest) {
   int headerlength = 0;
   char *psavestat1 = httprequest;
   char *pline = strtok_r(httprequest, "\r\n", &psavestat1);
+  int headerMaxLenght = sizeof(request->header) / sizeof(request->header[0]);
 
   do {
     if (!pline)
@@ -70,7 +75,8 @@ httpRequest *parshttp(char *httprequest) {
       break;
     }
     case HEADER:
-      while ((pline = strtok_r(NULL, "\r\n", &psavestat1)) != NULL) {
+      while ((pline = strtok_r(NULL, "\r\n", &psavestat1)) != NULL &&
+             headerlength <= headerMaxLenght) {
         tokenizeHeaderLine(pline, request, &headerlength);
       }
       request->headerlenght = headerlength;

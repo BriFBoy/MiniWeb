@@ -63,6 +63,10 @@ void *threadRunner(void *arg) {
 
 int main(int argc, char *argv[]) {
   LOG_INFO("Starting...");
+  char info_path[300];
+  snprintf(info_path, sizeof(info_path), "Getting files from: %s",
+           getenv("MINIWEB_SOURCE"));
+  LOG_INFO(info_path);
   checkRunState();
 
   int clientfd;

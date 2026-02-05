@@ -35,7 +35,9 @@ char *getDefaultHeaderFields() {
          "X-Content-Type-Options: nosniff\r\n"
          "Connection: close\r\n"
          "Cache-Control: private, max-age=60\r\n"
-         "Referrer-Policy: no-referrer";
+         "Access-Control-Allow-Origin: *\r\n"
+         "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+         "Access-Control-Allow-Headers: *";
 }
 void createResponseHeader(char *response, const int maxResponseLenght,
                           char *statusline, const char *path,

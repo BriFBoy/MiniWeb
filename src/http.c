@@ -84,6 +84,16 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
                          "HTTP/1.0 405 Method Not Allowed ",
                          "/.errors/500.html", *bodySize);
     break;
+  case REQUEST_TO_BIG:
+    *pbody = getContent("/.errors/413.html", &statuscodes, bodySize);
+    if (!pbody || bodySize <= 0) {
+      addStatusLine(pResponse, "HTTP/1.0 413 Payload Too Large \r\n",
+                    MAXBUFFSIZE);
+    }
+    createResponseHeader(pResponse, MAXBUFFSIZE,
+                         "HTTP/1.0 413 Payload Too Large", "/.errors/500.html",
+                         *bodySize);
+    break;
   }
   return pResponse;
 }

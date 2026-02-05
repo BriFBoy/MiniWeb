@@ -31,8 +31,8 @@ int serverSetup();
 void serveConnection(const int clientfd);
 void sendResponse(const int clientfd, const httpRequest *request,
                   Response *response);
-void readIncommingData(char *buff, int *bytesread, const int clientfd,
-                       char *httprequest);
+void readIncommingData(char *buff, const int clientfd, char *httprequest,
+                       enum statusCodes *status);
 
 pthread_t thread_pool[20];
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
   }
 
   struct timeval clientTimeout;
-  clientTimeout.tv_sec = 10;
+  clientTimeout.tv_sec = Config_getTimeout();
   clientTimeout.tv_usec = 0;
   for (;;) {
 
@@ -111,7 +111,7 @@ int serverSetup() {
   struct sockaddr_in serveraddr = {0};
   serveraddr.sin_family = AF_INET;
   serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  serveraddr.sin_port = htons(PORT);
+  serveraddr.sin_port = htons(Config_getPort());
 
   if (bind(socket_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
     LOG_FATAL("Error binding port");
@@ -126,14 +126,25 @@ int serverSetup() {
 }
 
 void serveConnection(const int clientfd) {
-  char httprequest[MAXBUFFSIZE];
+  const int MAX_REQUEST_SIZE = Config_getMaxRequestSize();
+  char httprequest[MAX_REQUEST_SIZE];
   memset(&httprequest, 0, sizeof(httprequest));
   httprequest[0] = '\0';
-  char buff[MAXBUFFSIZE];
+  char buff[MAX_REQUEST_SIZE];
   Response response;
-  int bytesread = 0;
+  enum statusCodes status;
 
-  readIncommingData(buff, &bytesread, clientfd, httprequest);
+  readIncommingData(buff, clientfd, httprequest, &status);
+  if (status == REQUEST_TO_BIG) {
+    LOG_WARN("Request became to big");
+    unsigned char *body;
+    size_t bodySize;
+
+    response.pResponse = getResponseFromError(REQUEST_TO_BIG, &body, &bodySize);
+    write(clientfd, response.pResponse, strlen(response.pResponse));
+    close(clientfd);
+    return;
+  }
   httpRequest *parsedRequest = parshttp(httprequest);
 
   if (!parsedRequest) {
@@ -143,6 +154,8 @@ void serveConnection(const int clientfd) {
 
     response.pResponse = getResponseFromError(PARSING_FAILED, &body, &bodySize);
     write(clientfd, response.pResponse, strlen(response.pResponse));
+    close(clientfd);
+    return;
   }
 
   // Only GET method Supported
@@ -154,6 +167,10 @@ void serveConnection(const int clientfd) {
     response.pResponse =
         getResponseFromError(METHOD_NOT_ALLOWED, &body, &bodySize);
     write(clientfd, response.pResponse, strlen(response.pResponse));
+
+    free(parsedRequest);
+    close(clientfd);
+    return;
   } else {
 
     char log[200];
@@ -171,20 +188,28 @@ void serveConnection(const int clientfd) {
   close(clientfd);
 }
 
-void readIncommingData(char *buff, int *bytesread, const int clientfd,
-                       char *httprequest) {
+void readIncommingData(char *buff, const int clientfd, char *httprequest,
+                       enum statusCodes *status) {
+  int bytesread = 0;
+  const int MAX_REQUEST_SIZE = Config_getMaxRequestSize();
   httprequest[0] = '\0';
   int n;
-  while ((n = read(clientfd, buff, MAXBUFFSIZE - NULL_TERMINATOR)) > 0) {
-    *bytesread += n;
 
-    if (*bytesread > MAXBUFFSIZE) {
+  if (MAX_REQUEST_SIZE - NULL_TERMINATOR <= 0) {
+    *status = REQUEST_TO_BIG;
+    return;
+  }
+  while ((n = read(clientfd, buff, MAX_REQUEST_SIZE - NULL_TERMINATOR)) > 0) {
+    bytesread += n;
+
+    if (bytesread > MAX_REQUEST_SIZE) {
+      *status = REQUEST_TO_BIG;
       break;
     }
 
     buff[n] = '\0';
     strncat(httprequest, buff,
-            MAXBUFFSIZE - strlen(httprequest) - NULL_TERMINATOR);
+            MAX_REQUEST_SIZE - strlen(httprequest) - NULL_TERMINATOR);
 
     if (strstr(httprequest, "\r\n\r\n") != NULL) {
       break;

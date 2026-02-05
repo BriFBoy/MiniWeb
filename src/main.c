@@ -1,3 +1,4 @@
+#include "../Include/configuration.h"
 #include "../Include/content.h"
 #include "../Include/dataStructure.h"
 #include "../Include/global.h"
@@ -68,6 +69,8 @@ int main(int argc, char *argv[]) {
            getenv("MINIWEB_SOURCE"));
   LOG_INFO(info_path);
   checkRunState();
+
+  load_config("./app/config.json");
 
   int clientfd;
   int socket_fd = serverSetup();
@@ -212,7 +215,6 @@ void sendResponse(const int clientfd, const httpRequest *request,
 
   response->pResponse = malloc(MAXBUFFSIZE);
   response->responseLenght = MAXBUFFSIZE;
-  char content_lenght[100];
 
   createResponseHeader(response->pResponse, response->responseLenght,
                        "HTTP/1.0 200 OK", request->requestLine.path, bodySize);

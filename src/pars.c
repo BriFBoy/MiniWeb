@@ -101,7 +101,7 @@ void strtrim(char *str) {
     end--;
   }
 
-  if (start > 0 || end < (len - 1) && end > start) {
+  if ((start > 0 || end < (len - 1)) && end > start) {
     memmove(str, str + start, end - start + 1);
     str[end - start + 1] = '\0';
   }

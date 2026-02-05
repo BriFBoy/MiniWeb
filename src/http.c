@@ -8,6 +8,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+Pair G_MIME[] = {{".html", "text/html"},     {".css", "text/css"},
+                 {".js", "text/javascript"}, {".ico", "image/x-icon"},
+                 {".png", "image/png"},      {".jpg", "image/jpg"},
+                 {".jpeg", "image/jpeg"}};
+
+const int G_MIME_COUNT = sizeof(G_MIME) / sizeof(G_MIME[0]);
+
 void fixNondirectpath(httpRequest *request) {
   char *path = malloc(strlen(request->requestLine.path) + 1);
   strncpy(path, request->requestLine.path,

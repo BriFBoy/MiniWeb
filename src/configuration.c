@@ -1,8 +1,10 @@
 #include "../Include/configuration.h"
+#include "../Include/global.h"
 #include "../Include/logging.h"
 #include <cjson/cJSON.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static Config cfg;
@@ -28,6 +30,9 @@ void load_config(const char *path) {
   cJSON *json_timeout = cJSON_GetObjectItemCaseSensitive(parsed, "timeout");
   cJSON *json_max_request_size =
       cJSON_GetObjectItemCaseSensitive(parsed, "max_request_size");
+  cJSON *json_content_path =
+      cJSON_GetObjectItemCaseSensitive(parsed, "content_path");
+  cJSON *json_root_file = cJSON_GetObjectItemCaseSensitive(parsed, "root_file");
 
   if (cJSON_IsNumber(json_timeout)) {
     tmp_Config.timeout = json_timeout->valueint;
@@ -50,7 +55,18 @@ void load_config(const char *path) {
     tmp_Config.port = 8080;
   }
 
-  if (cJSON_IsString(json_loglevel) && json_loglevel->string != NULL) {
+  if (cJSON_IsString(json_root_file) && json_root_file->valuestring != NULL) {
+    strncpy(tmp_Config.root_file, json_root_file->valuestring,
+            sizeof(tmp_Config.root_file) - NULL_TERMINATOR);
+    tmp_Config.root_file[sizeof(tmp_Config.root_file)] = '\0';
+  } else {
+    strncpy(tmp_Config.root_file, "index.html",
+            sizeof(tmp_Config.root_file) - NULL_TERMINATOR);
+    tmp_Config.root_file[sizeof(tmp_Config.root_file) - 1] = '\0';
+    LOG_ERROR("Incorrect value in config.json: root_file");
+  }
+
+  if (cJSON_IsString(json_loglevel) && json_loglevel->valuestring != NULL) {
     if (strcmp(json_loglevel->valuestring, "info") == 0) {
       tmp_Config.loglevel = INFO;
     } else if (strcmp(json_loglevel->valuestring, "warn") == 0) {
@@ -67,6 +83,18 @@ void load_config(const char *path) {
     tmp_Config.loglevel = INFO;
   }
 
+  if (cJSON_IsString(json_content_path) &&
+      json_content_path->valuestring != NULL) {
+    strncpy(tmp_Config.content_path, json_content_path->valuestring,
+            sizeof(tmp_Config.content_path));
+    tmp_Config.content_path[sizeof(tmp_Config.content_path) - NULL_TERMINATOR] =
+        '\0';
+
+  } else {
+    LOG_FATAL("MISSING CONFIG: content_path");
+    exit(1);
+  }
+
   cfg = tmp_Config;
   config_Loaded = true;
   cJSON_Delete(parsed);
@@ -76,3 +104,5 @@ int Config_getLogLevel() { return cfg.loglevel; }
 int Config_getPort() { return cfg.port; }
 int Config_getTimeout() { return cfg.timeout; }
 int Config_getMaxRequestSize() { return cfg.max_request_size; }
+char *Config_getContentPath() { return cfg.content_path; }
+char *Config_getRootFile() { return cfg.root_file; }

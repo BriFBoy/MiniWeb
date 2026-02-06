@@ -1,3 +1,4 @@
+#include "../Include/configuration.h"
 #include "../Include/global.h"
 #include "../Include/logging.h"
 #include <stddef.h>
@@ -10,7 +11,7 @@
 unsigned char *getContent(const char *path, enum statusCodes *statuscode,
                           size_t *outSize) {
   // gets the path to the website source code (html, css etc.)
-  const char *APP = getenv("MINIWEB_SOURCE");
+  const char *APP = Config_getContentPath();
   char filepath[1024];
   unsigned char *httpbody;
   *outSize = 0;

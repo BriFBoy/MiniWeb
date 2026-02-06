@@ -1,4 +1,5 @@
 #include "../Include/http.h"
+#include "../Include/configuration.h"
 #include "../Include/content.h"
 #include "../Include/global.h"
 #include "../Include/httpbuilder.h"
@@ -22,11 +23,14 @@ void fixNondirectpath(httpRequest *request) {
 
   if (strchr(request->requestLine.path, '.') == NULL) {
     if (path[strlen(path) - NULL_TERMINATOR] == '/') {
-      strncat(request->requestLine.path, "index.html",
+      strncat(request->requestLine.path, Config_getRootFile(),
               sizeof(request->requestLine.path) -
                   strlen(request->requestLine.path) - NULL_TERMINATOR);
     } else {
-      strncat(request->requestLine.path, "/index.html",
+      strncat(request->requestLine.path, "/",
+              sizeof(request->requestLine.path) -
+                  strlen(request->requestLine.path) - NULL_TERMINATOR);
+      strncat(request->requestLine.path, Config_getRootFile(),
               sizeof(request->requestLine.path) -
                   strlen(request->requestLine.path) - NULL_TERMINATOR);
     }

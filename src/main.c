@@ -38,13 +38,6 @@ pthread_t thread_pool[20];
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond_var = PTHREAD_COND_INITIALIZER;
 
-void checkRunState() {
-  if (getenv("MINIWEB_SOURCE") == NULL) {
-    LOG_FATAL("Missing env MINIWEB_SOURCE");
-    exit(EXIT_FAILURE);
-  }
-}
-
 void *threadRunner(void *arg) {
   int client;
   while (true) {
@@ -63,14 +56,11 @@ void *threadRunner(void *arg) {
 }
 
 int main(int argc, char *argv[]) {
-  LOG_INFO("Starting...");
-  char info_path[300];
-  snprintf(info_path, sizeof(info_path), "Getting files from: %s",
-           getenv("MINIWEB_SOURCE"));
-  LOG_INFO(info_path);
-  checkRunState();
-
-  load_config("./app/config.json");
+  char *cwd = getcwd(NULL, 0);
+  char config_path[100];
+  snprintf(config_path, sizeof(config_path), "%s/%s", cwd, "config.json");
+  printf("%s", config_path);
+  load_config(config_path);
 
   int clientfd;
   int socket_fd = serverSetup();
@@ -82,6 +72,8 @@ int main(int argc, char *argv[]) {
   struct timeval clientTimeout;
   clientTimeout.tv_sec = Config_getTimeout();
   clientTimeout.tv_usec = 0;
+
+  LOG_INFO("Starting...");
   for (;;) {
 
     fflush(stdout);

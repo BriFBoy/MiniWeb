@@ -54,8 +54,7 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
                   MAXBUFFSIZE);
     break;
   case FILE_NOT_FOUND:
-
-    *pbody = getContent("/.errors/404.html", &statuscodes, bodySize);
+    *pbody = getContent(Config_getError(404), &statuscodes, bodySize);
     if (pbody != NULL) {
       createResponseHeader(pResponse, MAXBUFFSIZE, "HTTP/1.0 404 Not Found",
                            "/.errors/404.html", *bodySize);
@@ -68,7 +67,7 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
   case SUCCESS:
     break;
   case PARSING_FAILED:
-    *pbody = getContent("/.errors/500.html", &statuscodes, bodySize);
+    *pbody = getContent(Config_getError(500), &statuscodes, bodySize);
     if (!pbody && bodySize <= 0) {
       addStatusLine(pResponse, "HTTP/1.0 500 Internal Server Error\r\n",
                     MAXBUFFSIZE);
@@ -79,24 +78,27 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
 
     break;
   case METHOD_NOT_ALLOWED:
-    *pbody = getContent("/.errors/405.html", &statuscodes, bodySize);
+    *pbody = getContent(Config_getError(405), &statuscodes, bodySize);
     if (!pbody || bodySize <= 0) {
       addStatusLine(pResponse, "HTTP/1.0 405 Method Not Allowed\r\n",
                     MAXBUFFSIZE);
+    } else {
+      createResponseHeader(pResponse, MAXBUFFSIZE,
+                           "HTTP/1.0 405 Method Not Allowed ",
+                           "/.errors/500.html", *bodySize);
     }
-    createResponseHeader(pResponse, MAXBUFFSIZE,
-                         "HTTP/1.0 405 Method Not Allowed ",
-                         "/.errors/500.html", *bodySize);
     break;
   case REQUEST_TO_BIG:
-    *pbody = getContent("/.errors/413.html", &statuscodes, bodySize);
+    *pbody = getContent(Config_getError(413), &statuscodes, bodySize);
     if (!pbody || bodySize <= 0) {
       addStatusLine(pResponse, "HTTP/1.0 413 Payload Too Large \r\n",
                     MAXBUFFSIZE);
+    } else {
+
+      createResponseHeader(pResponse, MAXBUFFSIZE,
+                           "HTTP/1.0 413 Payload Too Large",
+                           "/.errors/500.html", *bodySize);
     }
-    createResponseHeader(pResponse, MAXBUFFSIZE,
-                         "HTTP/1.0 413 Payload Too Large", "/.errors/500.html",
-                         *bodySize);
     break;
   }
   return pResponse;

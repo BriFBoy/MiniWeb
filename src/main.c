@@ -24,7 +24,6 @@
 #include <unistd.h>
 
 #define MAXBACKLOG 500
-#define NUMTHREADS 20
 #define PORT 8080
 
 int serverSetup();
@@ -34,7 +33,7 @@ void sendResponse(const int clientfd, const httpRequest *request,
 void readIncommingData(char *buff, const int clientfd, char *httprequest,
                        enum statusCodes *status);
 
-pthread_t thread_pool[20];
+pthread_t *thread_pool;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond_var = PTHREAD_COND_INITIALIZER;
 static int shutdown_request = 0;
@@ -58,9 +57,10 @@ void *threadRunner(void *arg) {
 void exit_program(int sig) {
   shutdown_request = 1;
   pthread_cond_broadcast(&cond_var);
-  for (int i = 0; i < sizeof(thread_pool) / sizeof(pthread_t); i++) {
+  for (int i = 0; i < Config_getthread_amount(); i++) {
     pthread_join(thread_pool[i], NULL);
   }
+  free(thread_pool);
   exit(0);
 }
 
@@ -76,10 +76,11 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  thread_pool = malloc(sizeof(pthread_t) * Config_getthread_amount());
   int clientfd;
   int socket_fd = serverSetup();
 
-  for (int i = 0; i < NUMTHREADS; i++) {
+  for (int i = 0; i < Config_getthread_amount(); i++) {
     pthread_create(&thread_pool[i], NULL, threadRunner, NULL);
   }
 

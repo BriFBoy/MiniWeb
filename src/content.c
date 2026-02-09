@@ -26,13 +26,17 @@ unsigned char *getContent(const char *path, enum statusCodes *statuscode,
     return NULL;
   }
 
-  if (strncmp(filepath, APP, strlen(APP)) != 0) {
+  int app_len = strlen(APP);
+  if (strncmp(filepath, APP, app_len) != 0 ||
+      ((filepath[app_len] != '/') && filepath[app_len] != '\0')) {
     *statuscode = FILE_NOT_FOUND;
+    free(filepath);
     return NULL;
   }
 
   if (shouldIgnore(filepath)) {
     *statuscode = FILE_NOT_FOUND;
+    free(filepath);
     return NULL;
   }
 
@@ -48,12 +52,14 @@ unsigned char *getContent(const char *path, enum statusCodes *statuscode,
     if (!httpbody) {
       LOG_FATAL("Unable to Malloc");
       *statuscode = INTERNAL_ERROR;
+      fclose(file);
       return NULL;
     }
 
     int bytes = fread(httpbody, 1, stat.st_size, file);
     if (bytes <= 0) {
       *statuscode = FILE_NOT_FOUND;
+      fclose(file);
       return NULL;
     }
 
@@ -68,7 +74,7 @@ unsigned char *getContent(const char *path, enum statusCodes *statuscode,
 }
 
 bool shouldIgnore(const char *request_path) {
-  request_path += sizeof(Config_getRootFile());
+  request_path += strlen(Config_getRootFile());
   struct Ignores ignores = Config_getIgnores();
 
   for (int i = 0; i < Config_getIgnoreCount(); i++) {

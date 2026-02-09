@@ -1,6 +1,5 @@
 #include "../Include/pars.h"
 #include "../Include/http.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -50,7 +49,7 @@ int tokenizeHeaderLine(char *pline, httpRequest *request, int *headerlength) {
           sizeof(request->header->value) - NULL_TERMINATOR);
   strtrim(request->header[*headerlength].value);
 
-  headerlength++;
+  (*headerlength)++;
 
   return SUCCESS;
 }

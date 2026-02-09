@@ -80,6 +80,11 @@ int main(int argc, char *argv[]) {
   int clientfd;
   int socket_fd = serverSetup();
 
+  if (!thread_pool) {
+    LOG_FATAL("Failed to malloc thread_pool");
+    exit(1);
+  }
+
   for (int i = 0; i < Config_getthread_amount(); i++) {
     pthread_create(&thread_pool[i], NULL, threadRunner, NULL);
   }
@@ -159,6 +164,8 @@ void serveConnection(const int clientfd) {
   if (status == REQUEST_TO_BIG) {
     LOG_WARN("Request became to big");
     send_error_message(clientfd, response, REQUEST_TO_BIG);
+    free(httprequest);
+    free(buff);
     return;
   }
   httpRequest *parsedRequest = parshttp(httprequest);
@@ -166,6 +173,10 @@ void serveConnection(const int clientfd) {
   if (!parsedRequest) {
     LOG_ERROR("Error parsing http");
     send_error_message(clientfd, response, PARSING_FAILED);
+
+    free(httprequest);
+    free(buff);
+    free(parsedRequest);
     return;
   }
 
@@ -174,6 +185,9 @@ void serveConnection(const int clientfd) {
     LOG_WARN("Unsupported method");
     send_error_message(clientfd, response, METHOD_NOT_ALLOWED);
 
+    free(httprequest);
+    free(buff);
+    free(parsedRequest);
     return;
   } else {
 

@@ -54,7 +54,7 @@ void load_config(const char *path) {
     cJSON_ArrayForEach(ignore_item, json_ignore_array) {
       if (cJSON_IsString(ignore_item)) {
         strncpy(tmp_Config.ignores.ignores[i], ignore_item->valuestring,
-                sizeof(tmp_Config.ignores.ignores[i]));
+                sizeof(tmp_Config.ignores.ignores[0]));
       }
 
       i++;
@@ -70,13 +70,19 @@ void load_config(const char *path) {
     int i = 0;
 
     cJSON_ArrayForEach(errors_item, json_error_array) {
-      errors_item = errors_item->child;
+      cJSON *child = errors_item->child;
+      if (i >= 10)
+        break;
 
-      tmp_Config.errors[i].code = atoi(errors_item->string);
-      strncpy(tmp_Config.errors[i].path, errors_item->valuestring,
-              sizeof(tmp_Config.errors[0].path));
+      if (child) {
+        tmp_Config.errors[i].code = atoi(child->string);
+        strncpy(tmp_Config.errors[i].path, child->valuestring,
+                sizeof(tmp_Config.errors[0].path));
+      }
       i++;
     };
+  } else {
+    LOG_ERROR("Incorrect value in config.json: errors");
   }
 
   if (cJSON_IsNumber(json_timeout)) {

@@ -37,10 +37,11 @@ void readIncommingData(char *buff, const int clientfd, char *httprequest,
 pthread_t thread_pool[20];
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond_var = PTHREAD_COND_INITIALIZER;
+static int shutdown_request = 0;
 
 void *threadRunner(void *arg) {
   int client;
-  while (true) {
+  while (!shutdown_request) {
 
     pthread_mutex_lock(&mutex);
     if ((client = dequeue()) == -1) {
@@ -54,13 +55,26 @@ void *threadRunner(void *arg) {
   }
   return NULL;
 }
+void exit_program(int sig) {
+  shutdown_request = 1;
+  pthread_cond_broadcast(&cond_var);
+  for (int i = 0; i < sizeof(thread_pool) / sizeof(pthread_t); i++) {
+    pthread_join(thread_pool[i], NULL);
+  }
+  exit(0);
+}
 
 int main(int argc, char *argv[]) {
+  char config_path[100] = {0};
   char *cwd = getcwd(NULL, 0);
-  char config_path[100];
-  snprintf(config_path, sizeof(config_path), "%s/%s", cwd, "config.json");
-  printf("%s", config_path);
-  load_config(config_path);
+  if (cwd) {
+    snprintf(config_path, sizeof(config_path), "%s/%s", cwd, "config.json");
+    free(cwd);
+    load_config(config_path);
+  } else {
+    LOG_FATAL("Faild to get cwd. Unable to load config");
+    exit(1);
+  }
 
   int clientfd;
   int socket_fd = serverSetup();
@@ -69,6 +83,7 @@ int main(int argc, char *argv[]) {
     pthread_create(&thread_pool[i], NULL, threadRunner, NULL);
   }
 
+  signal(SIGINT, exit_program);
   struct timeval clientTimeout;
   clientTimeout.tv_sec = Config_getTimeout();
   clientTimeout.tv_usec = 0;
@@ -117,51 +132,47 @@ int serverSetup() {
   return socket_fd;
 }
 
+void send_error_message(const int clientfd, Response response,
+                        const enum statusCodes error) {
+  unsigned char *body;
+  size_t bodySize;
+
+  response.pResponse = getResponseFromError(error, &body, &bodySize);
+  write(clientfd, response.pResponse, strlen(response.pResponse));
+  close(clientfd);
+}
+
 void serveConnection(const int clientfd) {
   const int MAX_REQUEST_SIZE = Config_getMaxRequestSize();
-  char httprequest[MAX_REQUEST_SIZE];
-  memset(&httprequest, 0, sizeof(httprequest));
-  httprequest[0] = '\0';
-  char buff[MAX_REQUEST_SIZE];
+  char *httprequest = calloc(sizeof(char), MAX_REQUEST_SIZE);
+  char *buff = malloc(MAX_REQUEST_SIZE);
   Response response;
   enum statusCodes status;
+  if (!buff || !httprequest) {
+    LOG_ERROR("Faild to malloc mem to buffs");
+    close(clientfd);
+    return;
+  }
 
   readIncommingData(buff, clientfd, httprequest, &status);
   if (status == REQUEST_TO_BIG) {
     LOG_WARN("Request became to big");
-    unsigned char *body;
-    size_t bodySize;
-
-    response.pResponse = getResponseFromError(REQUEST_TO_BIG, &body, &bodySize);
-    write(clientfd, response.pResponse, strlen(response.pResponse));
-    close(clientfd);
+    send_error_message(clientfd, response, REQUEST_TO_BIG);
     return;
   }
   httpRequest *parsedRequest = parshttp(httprequest);
 
   if (!parsedRequest) {
     LOG_ERROR("Error parsing http");
-    unsigned char *body;
-    size_t bodySize;
-
-    response.pResponse = getResponseFromError(PARSING_FAILED, &body, &bodySize);
-    write(clientfd, response.pResponse, strlen(response.pResponse));
-    close(clientfd);
+    send_error_message(clientfd, response, PARSING_FAILED);
     return;
   }
 
   // Only GET method Supported
   if (strcmp(parsedRequest->requestLine.method, "GET") != 0) {
     LOG_WARN("Unsupported method");
-    unsigned char *body;
-    size_t bodySize;
+    send_error_message(clientfd, response, METHOD_NOT_ALLOWED);
 
-    response.pResponse =
-        getResponseFromError(METHOD_NOT_ALLOWED, &body, &bodySize);
-    write(clientfd, response.pResponse, strlen(response.pResponse));
-
-    free(parsedRequest);
-    close(clientfd);
     return;
   } else {
 
@@ -176,6 +187,8 @@ void serveConnection(const int clientfd) {
     sendResponse(clientfd, parsedRequest, &response);
   }
 
+  free(httprequest);
+  free(buff);
   free(parsedRequest);
   close(clientfd);
 }
@@ -184,7 +197,6 @@ void readIncommingData(char *buff, const int clientfd, char *httprequest,
                        enum statusCodes *status) {
   int bytesread = 0;
   const int MAX_REQUEST_SIZE = Config_getMaxRequestSize();
-  httprequest[0] = '\0';
   int n;
 
   if (MAX_REQUEST_SIZE - NULL_TERMINATOR <= 0) {
@@ -207,6 +219,7 @@ void readIncommingData(char *buff, const int clientfd, char *httprequest,
       break;
     }
   }
+  *status = SUCCESS;
 }
 void sendResponse(const int clientfd, const httpRequest *request,
                   Response *response) {

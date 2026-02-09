@@ -3,6 +3,7 @@
 #include "../Include/logging.h"
 #include <cjson/cJSON.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,9 +23,15 @@ void load_config(const char *path) {
     LOG_WARN("NO CONFIG FILE FOUND");
     return;
   }
-  fread(buff, sizeof(buff), 1, file);
+  size_t n = fread(buff, 1, sizeof(buff) - 1, file);
+  buff[n] = '\0';
+  fclose(file);
 
   cJSON *parsed = cJSON_Parse(buff);
+  if (!parsed) {
+    LOG_FATAL("Faild to load Config!");
+    exit(1);
+  }
   cJSON *json_loglevel = cJSON_GetObjectItemCaseSensitive(parsed, "loglevel");
   cJSON *json_port = cJSON_GetObjectItemCaseSensitive(parsed, "port");
   cJSON *json_timeout = cJSON_GetObjectItemCaseSensitive(parsed, "timeout");
@@ -58,7 +65,7 @@ void load_config(const char *path) {
   if (cJSON_IsString(json_root_file) && json_root_file->valuestring != NULL) {
     strncpy(tmp_Config.root_file, json_root_file->valuestring,
             sizeof(tmp_Config.root_file) - NULL_TERMINATOR);
-    tmp_Config.root_file[sizeof(tmp_Config.root_file)] = '\0';
+    tmp_Config.root_file[sizeof(tmp_Config.root_file) - 1] = '\0';
   } else {
     strncpy(tmp_Config.root_file, "index.html",
             sizeof(tmp_Config.root_file) - NULL_TERMINATOR);

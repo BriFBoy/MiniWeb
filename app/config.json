@@ -1,0 +1,14 @@
+{
+  "loglevel": "info",
+  "timeout": 5,
+  "max_request_size": 1048576,
+  "port": 8080,
+  "content_path": "/home/brian/Projects/MiniWeb/app",
+  "root_file": "index.html",
+  "thread_amount": 20,
+  "errors": [
+    {"404": "/.errors/404.html"}
+  ],
+  "ignores": []
+
+}

@@ -1,3 +1,4 @@
+#include "../Include/configuration.h"
 #include "../Include/content.h"
 #include "../Include/dataStructure.h"
 #include "../Include/global.h"
@@ -23,30 +24,23 @@
 #include <unistd.h>
 
 #define MAXBACKLOG 500
-#define NUMTHREADS 20
 #define PORT 8080
 
 int serverSetup();
 void serveConnection(const int clientfd);
 void sendResponse(const int clientfd, const httpRequest *request,
                   Response *response);
-void readIncommingData(char *buff, int *bytesread, const int clientfd,
-                       char *httprequest);
+void readIncommingData(char *buff, const int clientfd, char *httprequest,
+                       enum statusCodes *status);
 
-pthread_t thread_pool[20];
+pthread_t *thread_pool;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond_var = PTHREAD_COND_INITIALIZER;
-
-void checkRunState() {
-  if (getenv("MINIWEB_SOURCE") == NULL) {
-    LOG_FATAL("Missing env MINIWEB_SOURCE");
-    exit(EXIT_FAILURE);
-  }
-}
+static int shutdown_request = 0;
 
 void *threadRunner(void *arg) {
   int client;
-  while (true) {
+  while (!shutdown_request) {
 
     pthread_mutex_lock(&mutex);
     if ((client = dequeue()) == -1) {
@@ -60,25 +54,47 @@ void *threadRunner(void *arg) {
   }
   return NULL;
 }
+void exit_program(int sig) {
+  shutdown_request = 1;
+  pthread_cond_broadcast(&cond_var);
+  for (int i = 0; i < Config_getthread_amount(); i++) {
+    pthread_join(thread_pool[i], NULL);
+  }
+  free(thread_pool);
+  exit(0);
+}
 
 int main(int argc, char *argv[]) {
-  LOG_INFO("Starting...");
-  char info_path[300];
-  snprintf(info_path, sizeof(info_path), "Getting files from: %s",
-           getenv("MINIWEB_SOURCE"));
-  LOG_INFO(info_path);
-  checkRunState();
+  char config_path[100] = {0};
+  char *cwd = getcwd(NULL, 0);
+  if (cwd) {
+    snprintf(config_path, sizeof(config_path), "%s/%s", cwd, "config.json");
+    free(cwd);
+    load_config(config_path);
+  } else {
+    LOG_FATAL("Faild to get cwd. Unable to load config");
+    exit(1);
+  }
 
+  thread_pool = malloc(sizeof(pthread_t) * Config_getthread_amount());
   int clientfd;
   int socket_fd = serverSetup();
 
-  for (int i = 0; i < NUMTHREADS; i++) {
+  if (!thread_pool) {
+    LOG_FATAL("Failed to malloc thread_pool");
+    exit(1);
+  }
+
+  for (int i = 0; i < Config_getthread_amount(); i++) {
     pthread_create(&thread_pool[i], NULL, threadRunner, NULL);
   }
 
+  signal(SIGINT, exit_program);
   struct timeval clientTimeout;
-  clientTimeout.tv_sec = 10;
+  clientTimeout.tv_sec = Config_getTimeout();
   clientTimeout.tv_usec = 0;
+
+  LOG_INFO("Starting...");
   for (;;) {
 
     fflush(stdout);
@@ -108,7 +124,7 @@ int serverSetup() {
   struct sockaddr_in serveraddr = {0};
   serveraddr.sin_family = AF_INET;
   serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  serveraddr.sin_port = htons(PORT);
+  serveraddr.sin_port = htons(Config_getPort());
 
   if (bind(socket_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
     LOG_FATAL("Error binding port");
@@ -122,35 +138,57 @@ int serverSetup() {
   return socket_fd;
 }
 
-void serveConnection(const int clientfd) {
-  char httprequest[MAXBUFFSIZE];
-  memset(&httprequest, 0, sizeof(httprequest));
-  httprequest[0] = '\0';
-  char buff[MAXBUFFSIZE];
-  Response response;
-  int bytesread = 0;
+void send_error_message(const int clientfd, Response response,
+                        const enum statusCodes error) {
+  unsigned char *body;
+  size_t bodySize;
 
-  readIncommingData(buff, &bytesread, clientfd, httprequest);
+  response.pResponse = getResponseFromError(error, &body, &bodySize);
+  write(clientfd, response.pResponse, strlen(response.pResponse));
+  close(clientfd);
+}
+
+void serveConnection(const int clientfd) {
+  const int MAX_REQUEST_SIZE = Config_getMaxRequestSize();
+  char *httprequest = calloc(sizeof(char), MAX_REQUEST_SIZE);
+  char *buff = malloc(MAX_REQUEST_SIZE);
+  Response response;
+  enum statusCodes status;
+  if (!buff || !httprequest) {
+    LOG_ERROR("Faild to malloc mem to buffs");
+    close(clientfd);
+    return;
+  }
+
+  readIncommingData(buff, clientfd, httprequest, &status);
+  if (status == REQUEST_TO_BIG) {
+    LOG_WARN("Request became to big");
+    send_error_message(clientfd, response, REQUEST_TO_BIG);
+    free(httprequest);
+    free(buff);
+    return;
+  }
   httpRequest *parsedRequest = parshttp(httprequest);
 
   if (!parsedRequest) {
     LOG_ERROR("Error parsing http");
-    unsigned char *body;
-    size_t bodySize;
+    send_error_message(clientfd, response, PARSING_FAILED);
 
-    response.pResponse = getResponseFromError(PARSING_FAILED, &body, &bodySize);
-    write(clientfd, response.pResponse, strlen(response.pResponse));
+    free(httprequest);
+    free(buff);
+    free(parsedRequest);
+    return;
   }
 
   // Only GET method Supported
   if (strcmp(parsedRequest->requestLine.method, "GET") != 0) {
     LOG_WARN("Unsupported method");
-    unsigned char *body;
-    size_t bodySize;
+    send_error_message(clientfd, response, METHOD_NOT_ALLOWED);
 
-    response.pResponse =
-        getResponseFromError(METHOD_NOT_ALLOWED, &body, &bodySize);
-    write(clientfd, response.pResponse, strlen(response.pResponse));
+    free(httprequest);
+    free(buff);
+    free(parsedRequest);
+    return;
   } else {
 
     char log[200];
@@ -164,29 +202,39 @@ void serveConnection(const int clientfd) {
     sendResponse(clientfd, parsedRequest, &response);
   }
 
+  free(httprequest);
+  free(buff);
   free(parsedRequest);
   close(clientfd);
 }
 
-void readIncommingData(char *buff, int *bytesread, const int clientfd,
-                       char *httprequest) {
-  httprequest[0] = '\0';
+void readIncommingData(char *buff, const int clientfd, char *httprequest,
+                       enum statusCodes *status) {
+  int bytesread = 0;
+  const int MAX_REQUEST_SIZE = Config_getMaxRequestSize();
   int n;
-  while ((n = read(clientfd, buff, MAXBUFFSIZE - NULL_TERMINATOR)) > 0) {
-    *bytesread += n;
 
-    if (*bytesread > MAXBUFFSIZE) {
+  if (MAX_REQUEST_SIZE - NULL_TERMINATOR <= 0) {
+    *status = REQUEST_TO_BIG;
+    return;
+  }
+  while ((n = read(clientfd, buff, MAX_REQUEST_SIZE - NULL_TERMINATOR)) > 0) {
+    bytesread += n;
+
+    if (bytesread > MAX_REQUEST_SIZE) {
+      *status = REQUEST_TO_BIG;
       break;
     }
 
     buff[n] = '\0';
     strncat(httprequest, buff,
-            MAXBUFFSIZE - strlen(httprequest) - NULL_TERMINATOR);
+            MAX_REQUEST_SIZE - strlen(httprequest) - NULL_TERMINATOR);
 
     if (strstr(httprequest, "\r\n\r\n") != NULL) {
       break;
     }
   }
+  *status = SUCCESS;
 }
 void sendResponse(const int clientfd, const httpRequest *request,
                   Response *response) {
@@ -212,7 +260,6 @@ void sendResponse(const int clientfd, const httpRequest *request,
 
   response->pResponse = malloc(MAXBUFFSIZE);
   response->responseLenght = MAXBUFFSIZE;
-  char content_lenght[100];
 
   createResponseHeader(response->pResponse, response->responseLenght,
                        "HTTP/1.0 200 OK", request->requestLine.path, bodySize);

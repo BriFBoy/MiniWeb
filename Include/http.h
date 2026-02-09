@@ -10,9 +10,9 @@ typedef struct {
 } Pair;
 
 struct requestLine {
-    char method[25];
-    char path[150];
-    char version[25];
+  char method[25];
+  char path[150];
+  char version[25];
 };
 typedef struct {
   struct requestLine requestLine;
@@ -31,14 +31,8 @@ void fixNondirectpath(httpRequest *request);
 char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
                            size_t *bodySize);
 
-// the MIMI types used for getting the content type
-static Pair G_MIME[] = {{".html", "text/html"},
-                        {".css", "text/css"},
-                        {".js", "text/javascript"},
-                        {".ico", "image/x-icon"},
-                        {".png", "image/png"},
-                        {".jpg", "image/jpg"},
-                        {".jpeg", "image/jpeg"}};
-
+// The MIMI types used for getting the content type
+extern Pair G_MIME[];
+extern const int G_MIME_COUNT;
 
 #endif // !HTTP_H

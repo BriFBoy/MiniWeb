@@ -1,5 +1,8 @@
+#include "../Include/configuration.h"
 #include "../Include/global.h"
 #include "../Include/logging.h"
+#include <linux/limits.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,27 +10,39 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+bool shouldIgnore(const char *request_path);
+
 unsigned char *getContent(const char *path, enum statusCodes *statuscode,
                           size_t *outSize) {
   // gets the path to the website source code (html, css etc.)
-  const char *APP = getenv("MINIWEB_SOURCE");
-  char filepath[1024];
+  const char *APP = Config_getContentPath();
+  char pathbuff[400];
   unsigned char *httpbody;
   *outSize = 0;
-
-  snprintf(filepath, sizeof(filepath), "%s%s", APP, path);
-
-  // checks to see if the file is inside the website root directory
-  if (strstr(filepath, "..") != NULL) {
+  snprintf(pathbuff, sizeof(pathbuff), "%s%s", APP, path);
+  char *filepath = realpath(pathbuff, NULL);
+  if (!filepath) {
     *statuscode = FILE_NOT_FOUND;
     return NULL;
   }
-  if (strncmp(filepath, APP, strlen(APP)) != 0) {
+
+  int app_len = strlen(APP);
+  if (strncmp(filepath, APP, app_len) != 0 ||
+      ((filepath[app_len] != '/') && filepath[app_len] != '\0')) {
     *statuscode = FILE_NOT_FOUND;
+    free(filepath);
+    return NULL;
+  }
+
+  if (shouldIgnore(filepath)) {
+    *statuscode = FILE_NOT_FOUND;
+    free(filepath);
     return NULL;
   }
 
   FILE *file = fopen(filepath, "rb");
+  free(filepath);
+
   if (file != NULL) {
     int fd = fileno(file);
     struct stat stat;
@@ -37,12 +52,14 @@ unsigned char *getContent(const char *path, enum statusCodes *statuscode,
     if (!httpbody) {
       LOG_FATAL("Unable to Malloc");
       *statuscode = INTERNAL_ERROR;
+      fclose(file);
       return NULL;
     }
 
     int bytes = fread(httpbody, 1, stat.st_size, file);
     if (bytes <= 0) {
       *statuscode = FILE_NOT_FOUND;
+      fclose(file);
       return NULL;
     }
 
@@ -54,4 +71,17 @@ unsigned char *getContent(const char *path, enum statusCodes *statuscode,
     *statuscode = FILE_NOT_FOUND;
     return NULL;
   }
+}
+
+bool shouldIgnore(const char *request_path) {
+  request_path += strlen(Config_getRootFile());
+  struct Ignores ignores = Config_getIgnores();
+
+  for (int i = 0; i < Config_getIgnoreCount(); i++) {
+    if (strstr(request_path, ignores.ignores[i])) {
+      return true;
+    }
+  }
+
+  return false;
 }

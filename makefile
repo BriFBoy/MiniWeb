@@ -1,15 +1,16 @@
 SRC=src
 OBJ=obj
 BIN=bin
+CFLAGS=-Wall -g -lcjson
 
 SRCS=$(wildcard $(SRC)/*.c)
 OBJS=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCS)) 
 
 build: $(OBJS)
-	gcc $^ -g -o $(BIN)/program 
+	gcc $^ ${CFLAGS} -o $(BIN)/program 
 
 $(OBJ)/%.o: $(SRC)/%.c
-	gcc -g -c $^ -o $@ 
+	gcc ${CFLAGS} -c $^ -o $@ 
 
 
 clean: 

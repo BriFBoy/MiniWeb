@@ -1,11 +1,10 @@
 #include "../Include/configuration.h"
-#include "../Include/content.h"
 #include "../Include/dataStructure.h"
 #include "../Include/global.h"
 #include "../Include/http.h"
-#include "../Include/httpbuilder.h"
 #include "../Include/logging.h"
 #include "../Include/pars.h"
+#include "../Include/sending.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <bits/pthreadtypes.h>
@@ -28,8 +27,6 @@
 
 int serverSetup();
 void serveConnection(const int clientfd);
-void sendResponse(const int clientfd, const httpRequest *request,
-                  Response *response);
 void readIncommingData(char *buff, const int clientfd, char *httprequest,
                        enum statusCodes *status);
 
@@ -138,16 +135,6 @@ int serverSetup() {
   return socket_fd;
 }
 
-void send_error_message(const int clientfd, Response response,
-                        const enum statusCodes error) {
-  unsigned char *body;
-  size_t bodySize;
-
-  response.pResponse = getResponseFromError(error, &body, &bodySize);
-  write(clientfd, response.pResponse, strlen(response.pResponse));
-  close(clientfd);
-}
-
 void serveConnection(const int clientfd) {
   const int MAX_REQUEST_SIZE = Config_getMaxRequestSize();
   char *httprequest = calloc(sizeof(char), MAX_REQUEST_SIZE);
@@ -163,7 +150,7 @@ void serveConnection(const int clientfd) {
   readIncommingData(buff, clientfd, httprequest, &status);
   if (status == REQUEST_TO_BIG) {
     LOG_WARN("Request became to big");
-    send_error_message(clientfd, response, REQUEST_TO_BIG);
+    send_error_message(clientfd, REQUEST_TO_BIG);
     free(httprequest);
     free(buff);
     return;
@@ -172,7 +159,7 @@ void serveConnection(const int clientfd) {
 
   if (!parsedRequest) {
     LOG_ERROR("Error parsing http");
-    send_error_message(clientfd, response, PARSING_FAILED);
+    send_error_message(clientfd, PARSING_FAILED);
 
     free(httprequest);
     free(buff);
@@ -183,7 +170,7 @@ void serveConnection(const int clientfd) {
   // Only GET method Supported
   if (strcmp(parsedRequest->requestLine.method, "GET") != 0) {
     LOG_WARN("Unsupported method");
-    send_error_message(clientfd, response, METHOD_NOT_ALLOWED);
+    send_error_message(clientfd, METHOD_NOT_ALLOWED);
 
     free(httprequest);
     free(buff);
@@ -199,7 +186,7 @@ void serveConnection(const int clientfd) {
 
     // if the request is valid, find the correct file and send it
     fixNondirectpath(parsedRequest);
-    sendResponse(clientfd, parsedRequest, &response);
+    sendResponse(clientfd, parsedRequest);
   }
 
   free(httprequest);
@@ -235,38 +222,4 @@ void readIncommingData(char *buff, const int clientfd, char *httprequest,
     }
   }
   *status = SUCCESS;
-}
-void sendResponse(const int clientfd, const httpRequest *request,
-                  Response *response) {
-  enum statusCodes statuscode = SUCCESS;
-  size_t bodySize;
-  response->pBody =
-      getContent(request->requestLine.path, &statuscode, &bodySize);
-
-  if (response->pBody == NULL) {
-
-    // sends the correct error
-    response->pResponse =
-        getResponseFromError(statuscode, &response->pBody, &bodySize);
-
-    write(clientfd, response->pResponse, strlen(response->pResponse));
-    write(clientfd, response->pBody, bodySize);
-
-    free(response->pResponse);
-    free(response->pBody);
-
-    return;
-  }
-
-  response->pResponse = malloc(MAXBUFFSIZE);
-  response->responseLenght = MAXBUFFSIZE;
-
-  createResponseHeader(response->pResponse, response->responseLenght,
-                       "HTTP/1.0 200 OK", request->requestLine.path, bodySize);
-
-  write(clientfd, response->pResponse, strlen(response->pResponse));
-  write(clientfd, response->pBody, bodySize);
-
-  free(response->pBody);
-  free(response->pResponse);
 }

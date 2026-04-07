@@ -12,6 +12,8 @@ build: $(OBJS)
 $(OBJ)/%.o: $(SRC)/%.c
 	gcc ${CFLAGS} -c $^ -o $@ 
 
+install: build
+	sudo cp ./bin/program /usr/bin/miniweb
 
 clean: 
 	rm -f $(OBJ)/* $(BIN)/* 

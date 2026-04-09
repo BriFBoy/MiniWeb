@@ -58,6 +58,7 @@ void exit_program(int sig) {
     pthread_join(thread_pool[i], NULL);
   }
   free(thread_pool);
+  free(Config_getContentPath());
   exit(0);
 }
 
@@ -92,6 +93,7 @@ int main(int argc, char *argv[]) {
   clientTimeout.tv_usec = 0;
 
   LOG_INFO("Starting...");
+  printf("Serving from: %s\n", Config_getContentPath());
   for (;;) {
 
     fflush(stdout);

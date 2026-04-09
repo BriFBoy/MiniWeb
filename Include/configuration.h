@@ -28,7 +28,7 @@ typedef struct {
   int port;
   int timeout;
   int max_request_size;
-  char content_path[100];
+  char *content_path;
   char root_file[25];
   int thread_amount;
   Error_Path errors[10];

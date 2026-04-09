@@ -4,6 +4,7 @@
 #include "../Include/http.h"
 #include "../Include/logging.h"
 #include "../Include/pars.h"
+#include "../Include/read.h"
 #include "../Include/sending.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
@@ -36,6 +37,8 @@ pthread_cond_t cond_var = PTHREAD_COND_INITIALIZER;
 static int shutdown_request = 0;
 
 void *threadRunner(void *arg) {
+  (void)arg;
+
   int client;
   while (!shutdown_request) {
 
@@ -59,10 +62,13 @@ void exit_program(int sig) {
   }
   free(thread_pool);
   free(Config_getContentPath());
-  exit(0);
+  exit(sig);
 }
 
 int main(int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
+
   char config_path[100] = {0};
   char *cwd = getcwd(NULL, 0);
   if (cwd) {
@@ -139,9 +145,8 @@ int serverSetup() {
 
 void serveConnection(const int clientfd) {
   const int MAX_REQUEST_SIZE = Config_getMaxRequestSize();
-  char *httprequest = calloc(sizeof(char), MAX_REQUEST_SIZE);
+  char *httprequest = calloc(MAX_REQUEST_SIZE, sizeof(char));
   char *buff = malloc(MAX_REQUEST_SIZE);
-  Response response;
   enum statusCodes status;
   if (!buff || !httprequest) {
     LOG_ERROR("Faild to malloc mem to buffs");
@@ -195,33 +200,4 @@ void serveConnection(const int clientfd) {
   free(buff);
   free(parsedRequest);
   close(clientfd);
-}
-
-void readIncommingData(char *buff, const int clientfd, char *httprequest,
-                       enum statusCodes *status) {
-  int bytesread = 0;
-  const int MAX_REQUEST_SIZE = Config_getMaxRequestSize();
-  int n;
-
-  if (MAX_REQUEST_SIZE - NULL_TERMINATOR <= 0) {
-    *status = REQUEST_TO_BIG;
-    return;
-  }
-  while ((n = read(clientfd, buff, MAX_REQUEST_SIZE - NULL_TERMINATOR)) > 0) {
-    bytesread += n;
-
-    if (bytesread > MAX_REQUEST_SIZE) {
-      *status = REQUEST_TO_BIG;
-      break;
-    }
-
-    buff[n] = '\0';
-    strncat(httprequest, buff,
-            MAX_REQUEST_SIZE - strlen(httprequest) - NULL_TERMINATOR);
-
-    if (strstr(httprequest, "\r\n\r\n") != NULL) {
-      break;
-    }
-  }
-  *status = SUCCESS;
 }

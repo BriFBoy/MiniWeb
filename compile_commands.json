@@ -1,0 +1,47 @@
+[
+    {
+        "command": "cc -c -Wall -g -IInclude -Werror -o obj/configuration.o src/configuration.c",
+        "directory": "/home/brifboy/Projects/MiniWeb",
+        "file": "/home/brifboy/Projects/MiniWeb/src/configuration.c"
+    },
+    {
+        "command": "cc -c -Wall -g -IInclude -Werror -o obj/dataStructure.o src/dataStructure.c",
+        "directory": "/home/brifboy/Projects/MiniWeb",
+        "file": "/home/brifboy/Projects/MiniWeb/src/dataStructure.c"
+    },
+    {
+        "command": "cc -c -Wall -g -IInclude -Werror -o obj/logging.o src/logging.c",
+        "directory": "/home/brifboy/Projects/MiniWeb",
+        "file": "/home/brifboy/Projects/MiniWeb/src/logging.c"
+    },
+    {
+        "command": "cc -c -Wall -g -IInclude -Werror -o obj/main.o src/main.c",
+        "directory": "/home/brifboy/Projects/MiniWeb",
+        "file": "/home/brifboy/Projects/MiniWeb/src/main.c"
+    },
+    {
+        "command": "cc -c -Wall -g -IInclude -Werror -o obj/pars.o src/pars.c",
+        "directory": "/home/brifboy/Projects/MiniWeb",
+        "file": "/home/brifboy/Projects/MiniWeb/src/pars.c"
+    },
+    {
+        "command": "cc -c -Wall -g -IInclude -Werror -o obj/http/httpbuilder.o src/http/httpbuilder.c",
+        "directory": "/home/brifboy/Projects/MiniWeb",
+        "file": "/home/brifboy/Projects/MiniWeb/src/http/httpbuilder.c"
+    },
+    {
+        "command": "cc -c -Wall -g -IInclude -Werror -o obj/http/http.o src/http/http.c",
+        "directory": "/home/brifboy/Projects/MiniWeb",
+        "file": "/home/brifboy/Projects/MiniWeb/src/http/http.c"
+    },
+    {
+        "command": "cc -c -Wall -g -IInclude -Werror -o obj/io/content.o src/io/content.c",
+        "directory": "/home/brifboy/Projects/MiniWeb",
+        "file": "/home/brifboy/Projects/MiniWeb/src/io/content.c"
+    },
+    {
+        "command": "cc -c -Wall -g -IInclude -Werror -o obj/io/sending.o src/io/sending.c",
+        "directory": "/home/brifboy/Projects/MiniWeb",
+        "file": "/home/brifboy/Projects/MiniWeb/src/io/sending.c"
+    }
+]

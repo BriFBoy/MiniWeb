@@ -15,7 +15,7 @@ bool shouldIgnore(const char *request_path);
 unsigned char *getContent(const char *path, enum statusCodes *statuscode,
                           size_t *outSize) {
   // gets the path to the website source code (html, css etc.)
-  const char *APP = Config_getContentPath();
+  char *APP = Config_getContentPath();
   char pathbuff[400];
   unsigned char *httpbody;
   *outSize = 0;

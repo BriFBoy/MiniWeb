@@ -68,7 +68,7 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
     break;
   case PARSING_FAILED:
     *pbody = getContent(Config_getError(500), &statuscodes, bodySize);
-    if (!pbody && bodySize <= 0) {
+    if (pbody == NULL && bodySize <= 0) {
       addStatusLine(pResponse, "HTTP/1.0 500 Internal Server Error\r\n",
                     MAXBUFFSIZE);
     }
@@ -79,7 +79,7 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
     break;
   case METHOD_NOT_ALLOWED:
     *pbody = getContent(Config_getError(405), &statuscodes, bodySize);
-    if (!pbody || bodySize <= 0) {
+    if (pbody == NULL || bodySize <= 0) {
       addStatusLine(pResponse, "HTTP/1.0 405 Method Not Allowed\r\n",
                     MAXBUFFSIZE);
     } else {
@@ -90,7 +90,7 @@ char *getResponseFromError(enum statusCodes statuscodes, unsigned char **pbody,
     break;
   case REQUEST_TO_BIG:
     *pbody = getContent(Config_getError(413), &statuscodes, bodySize);
-    if (!pbody || bodySize <= 0) {
+    if (pbody == NULL || bodySize <= 0) {
       addStatusLine(pResponse, "HTTP/1.0 413 Payload Too Large \r\n",
                     MAXBUFFSIZE);
     } else {

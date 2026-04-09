@@ -142,14 +142,19 @@ void load_config(const char *path) {
 
   if (cJSON_IsString(json_content_path) &&
       json_content_path->valuestring != NULL) {
-    strncpy(tmp_Config.content_path, json_content_path->valuestring,
-            sizeof(tmp_Config.content_path));
-    tmp_Config.content_path[sizeof(tmp_Config.content_path) - NULL_TERMINATOR] =
-        '\0';
+
+    int len = strlen(json_content_path->valuestring) + 1;
+
+    tmp_Config.content_path = malloc(len);
+    if (tmp_Config.content_path == NULL) {
+      perror("Faild to malloc content_path");
+      exit(1);
+    }
+    strncpy(tmp_Config.content_path, json_content_path->valuestring, len);
+    tmp_Config.content_path[strlen(tmp_Config.content_path)] = '\0';
 
   } else {
-    LOG_FATAL("MISSING CONFIG: content_path");
-    exit(1);
+    tmp_Config.content_path = getcwd(NULL, 0);
   }
 
   cfg = tmp_Config;

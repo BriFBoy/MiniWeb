@@ -1,6 +1,7 @@
 
 *program
 vg*
+bin/miniweb
 
 bin/miniweb
 *.o

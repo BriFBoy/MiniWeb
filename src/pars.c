@@ -18,6 +18,12 @@ int tokenizeStatusLine(char *psavestat2, httpRequest *request) {
   pstr = strtok_r(NULL, " ", &psavestat2);
   if (!pstr)
     return PARSING_FAILED;
+  // finds the query in the url and cuts it of to ignore it
+  char *query = strchr(pstr, '?');
+  if (query) {
+    *query = '\0';
+  }
+
   strncpy(request->requestLine.path, pstr,
           sizeof(request->requestLine.path) - NULL_TERMINATOR);
   request->requestLine.path[sizeof(request->requestLine.path) - 1] = '\0';

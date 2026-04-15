@@ -37,7 +37,8 @@ char *getDefaultHeaderFields() {
          "Cache-Control: private, max-age=60\r\n"
          "Access-Control-Allow-Origin: *\r\n"
          "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-         "Access-Control-Allow-Headers: *";
+         "Access-Control-Allow-Headers: *\r\n"
+         "Content-Security-Policy: connect-src *";
 }
 void createResponseHeader(char *response, const int maxResponseLenght,
                           char *statusline, const char *path,

@@ -59,16 +59,20 @@ Cd into the directory of the project
   cd MiniWeb
 ```
 
-Build the program with make
+Build and install with this command. If the want to build the developer version can be done with the buid command.
 
 ```bash
-  make build
+  make install
+	# or - To build for development
+	make build
 ```
 
 And at the end run the program
 
 ```bash
-  ./bin/program
+  miniweb # After installing
+	# or
+	./bin/miniweb # If built for development
 ```
 
 

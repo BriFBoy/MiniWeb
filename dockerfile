@@ -1,19 +1,24 @@
-FROM archlinux:latest AS builder
+FROM debian:bookworm AS builder
 
-WORKDIR /WORK
+RUN apt-get update && apt-get install -y \
+  build-essential \
+  libcjson-dev \
+  make \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
 COPY . .
+RUN make release
 
-RUN pacman -Sy --noconfirm make gcc && mkdir -p bin obj && make build
+FROM debian:bookworm-slim
 
+RUN apt-get update && apt-get install -y \
+  libcjson1 && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /app/bin/miniweb /usr/local/bin/miniweb
 
-FROM archlinux:latest
+RUN mkdir -p /var/www
+WORKDIR /var/www
 
-WORKDIR /WORK
-
-COPY --from=builder /WORK/app/ /WORK/app/
-COPY --from=builder /WORK/bin/program /WORK/program
-
-ENV MINIWEB_SOURCE=./app
-
-CMD ["./program"]
+EXPOSE 8080
+ENTRYPOINT ["miniweb"]
+CMD ["--root", "/var/www"]

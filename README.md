@@ -21,6 +21,8 @@ Before you build and run MiniWeb, make sure your system has the following:
 
 - **make**
   Used to build the project using the provided Makefile.
+- **cJSON**
+  Used for paring the config file.
 
 - **Docker (optional)**
   Only needed if you plan to run MiniWeb inside a Docker container.
@@ -38,7 +40,7 @@ Next, you will need to run the Dockerfile to build the program from source and c
 ```bash
   docker build -t miniweb:latest .
 ```
-By default, the Dockerfile will set the MINIWEB_SOURCE env to ./app this is where the website's files are stored by default. If you would like to change where the program gets the files from, then you can do that by using the -e argument when running the Dockerfile. After you have built the image you can run it with this command
+Running the the dockerfile is just one simple command.
 ```bash
   docker run --name A_NAME_YOU_WANT -p 8080:8080 -d miniweb:latest
 ```
